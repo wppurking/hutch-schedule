@@ -5,7 +5,7 @@ RSpec.describe Hutch::Schedule do
     expect(Hutch::Schedule::VERSION).not_to be nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "Hutch config" do
+    expect(Hutch::Config.default_config.class).to eq Hash
   end
 end
