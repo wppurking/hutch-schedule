@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'hutch/schedule/version'
+require 'hutch-schedule/version'
 
 Gem::Specification.new do |spec|
   spec.name    = "hutch-schedule"
-  spec.version = Hutch::Schedule::VERSION
+  spec.version = HutchSchedule::VERSION
   spec.authors = ["wyatt pan"]
   spec.email   = ["wppurking@gmail.com"]
 
@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'hutch', '~> 0.24'
 
+  spec.add_development_dependency "activejob"
   spec.add_development_dependency "bundler", "~> 1.14"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"

@@ -7,6 +7,11 @@ module Hutch
 
     attr_reader :schedule
 
+    # @param config [nil,Hash] Configuration override
+    def initialize(config = nil)
+      @config = config || Hutch::Config
+    end
+
     def disconnect
       @channel.close if @channel
       @connection.close if @connection
@@ -32,7 +37,7 @@ module Hutch
     end
 
     def set_up_schedule!
-      @schedule = Hutch::Schedule.new(self)
+      @schedule = HutchSchedule::Schedule.new(self)
       @schedule.setup!
     end
   end

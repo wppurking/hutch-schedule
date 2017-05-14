@@ -1,11 +1,11 @@
 require 'hutch'
-require "hutch/schedule/version"
-require 'hutch/logging'
+require "hutch-schedule/version"
+require 'active_support/core_ext/module/delegation'
 
 # Help
-module Hutch
+module HutchSchedule
   # 共享 Hutch::Broker 实例的所有东西
-  module Schedule
+  class Core
 
     attr_reader :broker, :exchange
 

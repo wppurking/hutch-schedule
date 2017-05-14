@@ -1,5 +1,6 @@
 require "bundler/setup"
-require "hutch/schedule"
+require "hutch-schedule"
+require 'hutch'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
