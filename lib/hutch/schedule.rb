@@ -13,6 +13,7 @@ module Hutch
 
     # 初始化 schedule
     def initialize(broker)
+      raise "Broker can`t be nil" if broker.blank?
       @broker = broker
     end
 
@@ -46,12 +47,13 @@ module Hutch
 
     # 申明 schedule 使用的 queue
     def setup_queue!
-      # TODO: 为 Queue 增加 TTL, 避免队列一直积压
-      queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", {})
+      # TODO: 将 Queue 的 ttl 抽取成为参数
+      queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", { 'x-message-ttl': 30.days.in_milliseconds })
       # routing all to this queue
       queue.bind(exchange, routing_key: '#')
     end
 
+    # Schedule broker 自己的 publish 方法
     def publish(*args)
       @publisher.publish(*args)
     end
