@@ -28,7 +28,7 @@ module Hutch
       exchange_options = { durable: true, "x-dead-letter-exchange" => config[:mq_exchange] }.merge(config[:mq_exchange_options])
       logger.info "using topic exchange(schedule) '#{exchange_name}'"
 
-      with_bunny_precondition_handler('schedule exchange') do
+      broker.with_bunny_precondition_handler('schedule exchange') do
         ch.topic(exchange_name, exchange_options)
       end
     end
