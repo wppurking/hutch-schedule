@@ -14,6 +14,7 @@ module Hutch
       @connection = nil
       @exchange   = nil
       @api_client = nil
+      @schedule   = nil
     end
 
     # Connect to RabbitMQ via AMQP
@@ -26,18 +27,13 @@ module Hutch
       declare_exchange!
       declare_publisher!
 
-      # Hack
+      # Hack on this endpoint!
       set_up_schedule!
     end
 
     def set_up_schedule!
       @schedule = Hutch::Schedule.new(self)
-      schedule.declare_exchange!
-      schedule.setup_queue!
-    end
-
-    def publish(*args)
-      @publisher.publish(*args)
+      @schedule.setup!
     end
   end
 end
