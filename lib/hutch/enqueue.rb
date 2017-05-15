@@ -18,7 +18,7 @@ module Hutch
       # interval: 推迟的时间
       # message: 具体的消息
       def enqueue_in(interval, message)
-        props = { expiration: interval.in_milliseconds }
+        props = { expiration: interval.in_milliseconds.to_i }
         Hutch::Schedule.publish(enqueue_routing_key, message, props)
       end
 

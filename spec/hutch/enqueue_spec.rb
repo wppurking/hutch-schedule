@@ -26,7 +26,7 @@ RSpec.describe Hutch::Enqueue do
 
 
   context 'enqueue_xx' do
-    before { Timecop.freeze }
+    before { Timecop.freeze(Time.at(1494837368.8773272)) }
 
     after { Timecop.return }
 
@@ -34,6 +34,12 @@ RSpec.describe Hutch::Enqueue do
       expect(Hutch::Schedule).to receive(:publish)
                                    .with('load', msg, { expiration: 10.seconds.in_milliseconds })
       LoadWork.enqueue_in(10.seconds, msg)
+    end
+
+    it 'enqueue_in in_milliseconds' do
+      expect(Hutch::Schedule).to receive(:publish)
+                                   .with('load', msg, { expiration: 10.seconds.in_milliseconds })
+      LoadWork.enqueue_in(10.0002102, msg)
     end
 
     it "enqueue_at" do
