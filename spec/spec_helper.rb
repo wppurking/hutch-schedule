@@ -1,4 +1,5 @@
 require "bundler/setup"
+require "timecop"
 require 'hutch'
 require "hutch/schedule"
 
