@@ -1,4 +1,5 @@
 require 'active_support/core_ext/module/delegation'
+require 'active_support/core_ext/object/blank'
 require 'hutch'
 require 'hutch/enqueue'
 require 'hutch/schedule/core'
