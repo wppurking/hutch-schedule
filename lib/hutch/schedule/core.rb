@@ -1,4 +1,5 @@
 require 'active_support/dependencies/autoload'
+require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/numeric'
 require 'active_support/core_ext/module/delegation'
 
@@ -53,9 +54,9 @@ module Hutch
 
       # 申明 schedule 使用的 queue
       def setup_queue!
-        # TODO: 将 Queue 的 ttl 抽取成为参数
-        props = { 'x-message-ttl': 30.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
-        queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
+        ttl_days = config[:schedule_mq_ttl_days].presence || 30
+        props    = { 'x-message-ttl': ttl_days.to_i.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
+        queue    = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
 
         # TODO: 可以考虑将这个抽取成为参数
         # routing all to this queue
