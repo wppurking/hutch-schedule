@@ -1,14 +1,12 @@
-require 'hutch'
-require 'hutch/enqueue'
 require 'active_support/core_ext/module/delegation'
-require 'hutch-schedule/core'
-require "hutch-schedule/version"
+require 'hutch/schedule/core'
 
 # Help
-module HutchSchedule
+module Hutch::Schedule
+
   def self.connect(broker)
     return if core.present?
-    @core = HutchSchedule::Core.new(broker)
+    @core = Hutch::Schedule::Core.new(broker)
     @core.connect!
   end
 

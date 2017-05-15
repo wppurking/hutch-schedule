@@ -1,5 +1,5 @@
 require 'active_support/concern'
-require 'hutch-schedule'
+require 'hutch/schedule'
 
 module Hutch
   # 如果需要增加让 Consumer Enqueue 的动作, 那么则 include 这个 Module
@@ -18,7 +18,7 @@ module Hutch
       # message: 具体的消息
       def enqueue_at(interval, message)
         props = { expiration: interval.in_milliseconds }
-        HutchSchedule.publish(enqueue_routing_key, message, props)
+        Hutch::Schedule.publish(enqueue_routing_key, message, props)
       end
 
       # routing_key: 目的为将 Message 发送给 RabbitMQ 那么使用其监听的任何一个 routing_key 都可以发送

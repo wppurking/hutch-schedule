@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'hutch-schedule/version'
+require 'hutch/schedule/version'
 
 Gem::Specification.new do |spec|
   spec.name    = "hutch-schedule"
-  spec.version = HutchSchedule::VERSION
+  spec.version = Hutch::Schedule::VERSION
   spec.authors = ["wyatt pan"]
   spec.email   = ["wppurking@gmail.com"]
 
