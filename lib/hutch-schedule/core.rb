@@ -23,10 +23,11 @@ module HutchSchedule
       Hutch::Config
     end
 
+    # Core 的连接, 注意连接是有顺序的, 必须先将 exchange 初始化好
     def connect!
-      setup_queue!
       declare_exchange!
       declare_publisher!
+      setup_queue!
     end
 
     def declare_publisher!
@@ -54,8 +55,12 @@ module HutchSchedule
     # 申明 schedule 使用的 queue
     def setup_queue!
       # TODO: 将 Queue 的 ttl 抽取成为参数
-      queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", { 'x-message-ttl': 30.days.in_milliseconds })
+      props = { 'x-message-ttl': 30.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
+      queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
+
+      # TODO: 可以考虑将这个抽取成为参数
       # routing all to this queue
+      queue.unbind(exchange, routing_key: '#')
       queue.bind(exchange, routing_key: '#')
     end
 
