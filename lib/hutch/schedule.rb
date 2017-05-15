@@ -2,6 +2,7 @@ require 'active_support/core_ext/module/delegation'
 require 'hutch'
 require 'hutch/enqueue'
 require 'hutch/schedule/core'
+require 'active_job/queue_adapters/hutch_adapter'
 
 # gem 的核心入口文件
 module Hutch
