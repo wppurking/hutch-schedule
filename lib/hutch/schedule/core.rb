@@ -54,9 +54,8 @@ module Hutch
 
       # 申明 schedule 使用的 queue
       def setup_queue!
-        ttl_days = config[:schedule_mq_ttl_days].presence || 30
-        props    = { 'x-message-ttl': ttl_days.to_i.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
-        queue    = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
+        props = { 'x-message-ttl': 30.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
+        queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
 
         # TODO: 可以考虑将这个抽取成为参数
         # routing all to this queue
