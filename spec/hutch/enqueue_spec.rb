@@ -26,13 +26,9 @@ RSpec.describe Hutch::Enqueue do
 
 
   context 'enqueue_xx' do
-    before do
-      Timecop.freeze
-    end
+    before { Timecop.freeze }
 
-    after do
-      Timecop.return
-    end
+    after { Timecop.return }
 
     it 'enqueue_in' do
       expect(Hutch::Schedule).to receive(:publish)
