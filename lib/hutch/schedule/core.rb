@@ -17,8 +17,9 @@ module Hutch
         @broker = broker
       end
 
+      # 获取 Hutch 上的 Config
       def config
-        Hutch::Config
+        broker.instance_variable_get(:@config)
       end
 
       # Core 的连接, 注意连接是有顺序的, 必须先将 exchange 初始化好
