@@ -46,7 +46,6 @@ module ActiveJob
 
       class JobWrapper #:nodoc:
         include Hutch::Consumer
-        include Hutch::Enqueue
         # 给 ActiveJob 使用的一个大队列
         consume "#{HutchAdapter::AJ_ROUTING_KEY}.#"
 
