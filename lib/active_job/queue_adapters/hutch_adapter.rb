@@ -17,19 +17,31 @@ module ActiveJob
         @monitor = Monitor.new
       end
 
+      # 不适用 Consumer 的 enqueue, 无需每次重复计算
       def enqueue(job) #:nodoc:
         @monitor.synchronize do
-          JobWrapper.consume "#{AJ_ROUTING_KEY}.#{job.queue_name}"
           # 将整个 job 的 data 变为 hash 发布出去
-          JobWrapper.enqueue job.serialize
+          Hutch.publish(routing_key(job), job.serialize)
         end
       end
 
       def enqueue_at(job, timestamp) #:nodoc:
+        interval = [(timestamp - Time.now.utc.to_i), 1.second].max
+        enqueue_in(interval, job.serialize, routing_key(job))
+      end
+
+      # 不适用 Consumer 的 enqueue, 无需每次重复计算
+      def enqueue_in(interval, message, routing_key)
         @monitor.synchronize do
-          JobWrapper.consume "#{AJ_ROUTING_KEY}.#{job.queue_name}"
-          JobWrapper.enqueue_at(timestamp, job.serialize)
+          # 必须是 integer
+          props = { expiration: interval.in_milliseconds.to_i }
+          Hutch::Schedule.publish(routing_key, message, props)
         end
+      end
+
+      # 计算 routing_key
+      def routing_key(job)
+        "#{AJ_ROUTING_KEY}.#{job.queue_name}"
       end
 
       class JobWrapper #:nodoc:
