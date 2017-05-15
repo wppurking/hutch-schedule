@@ -1,5 +1,7 @@
 require 'hutch'
 require "hutch-schedule/version"
+require 'active_support/dependencies/autoload'
+require 'active_support/core_ext/numeric'
 require 'active_support/core_ext/module/delegation'
 
 # Help
@@ -9,7 +11,7 @@ module HutchSchedule
 
     attr_reader :broker, :exchange
 
-    delegate :channel, :config, :connection, :logger, :with_bunny_precondition_handler, to: :broker
+    delegate :channel, :connection, :logger, to: :broker
 
     # 初始化 schedule
     def initialize(broker)
@@ -17,10 +19,14 @@ module HutchSchedule
       @broker = broker
     end
 
-    def setup!
-      declare_publisher!
-      declare_exchange!
+    def config
+      Hutch::Config
+    end
+
+    def connect!
       setup_queue!
+      declare_exchange!
+      declare_publisher!
     end
 
     def declare_publisher!
@@ -40,7 +46,7 @@ module HutchSchedule
         'x-dead-letter-exchange': config[:mq_exchange] }.merge(config[:mq_exchange_options])
       logger.info "using topic exchange(schedule) '#{exchange_name}'"
 
-      with_bunny_precondition_handler('schedule exchange') do
+      broker.send(:with_bunny_precondition_handler, 'schedule exchange') do
         ch.topic(exchange_name, exchange_options)
       end
     end

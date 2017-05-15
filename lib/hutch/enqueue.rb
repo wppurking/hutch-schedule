@@ -1,13 +1,13 @@
-require 'set'
+require 'active_support/concern'
+require 'hutch-schedule'
 
 module Hutch
-  # Include this module in a class to register it as a consumer. Consumers
-  # gain a class method called `consume`, which should be used to register
-  # the routing keys a consumer is interested in.
-  module Consumer
+  # 如果需要增加让 Consumer Enqueue 的动作, 那么则 include 这个 Module
+  module Enqueue
+    extend ActiveSupport::Concern
 
     # Add Consumer methods
-    module ClassMethods
+    class_methods do
       # 正常的发布 consumer 对应 routing key 的消息
       def enqueue(message)
         Hutch.publish(enqueue_routing_key, message)
@@ -18,7 +18,7 @@ module Hutch
       # message: 具体的消息
       def enqueue_at(interval, message)
         props = { expiration: interval.in_milliseconds }
-        Hutch.schedule(enqueue_routing_key, message, props)
+        HutchSchedule.publish(enqueue_routing_key, message, props)
       end
 
       # routing_key: 目的为将 Message 发送给 RabbitMQ 那么使用其监听的任何一个 routing_key 都可以发送

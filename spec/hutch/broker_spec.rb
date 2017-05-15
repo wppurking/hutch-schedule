@@ -1,5 +1,4 @@
 require "spec_helper"
-require 'hutch'
 
 RSpec.describe Hutch::Broker do
   before do
@@ -30,7 +29,6 @@ RSpec.describe Hutch::Broker do
 
     it '初始化 schedule' do
       expect(broker).to receive(:set_up_schedule!)
-      p Hutch::Broker.methods
       broker.connect
     end
 
