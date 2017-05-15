@@ -32,7 +32,7 @@ module Hutch
       # routing_key: 目的为将 Message 发送给 RabbitMQ 那么使用其监听的任何一个 routing_key 都可以发送
       def enqueue_routing_key
         raise "Routing Keys is not set!" if routing_keys.size < 1
-        routing_keys.first
+        routing_keys.to_a.last
       end
     end
   end
