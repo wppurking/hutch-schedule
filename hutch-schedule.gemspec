@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary     = %q{Add Schedule and Error Retry To Hutch.}
   spec.description = %q{Add Schedule and Error Retry To Hutch.}
-  spec.homepage    = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage    = "https://github.com/wppurking/hutch-schedule"
   spec.license     = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
