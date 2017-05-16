@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-为了能够初始化这个项目, 需要在合适的地方设置 Hutch 的 setup_proc 用于初始化 Hutch::Schedule
+Use the code below to initialize the Hutch::Schedule
 
 ```ruby
 Hutch::Config.setup_procs  << -> {
@@ -28,11 +28,12 @@ Hutch::Config.setup_procs  << -> {
 }
 ```
 
-提供了如下的功能支持:
-1. 在 RabbitMQ 中自动创建了一个 <hutch>.schedule 的 topic exchange 用于专门转发需要延迟的 Message
-2. 在 RabbitMQ 中自动创建了一个 <hutch>_schedule_queue 的 queue 带有:
-   - dlx 到 <hutch> 的 topic exchange
-   - 以及避免任务一直挤压的 30 天的 ttl
+They will do something below:
+
+1. Declear an topic exchange called <hutch>.schedule just for routing message to schedule_queue.
+2. Declear an queue named <hutch>_schedule_queue and with some params:
+  - Set `x-dead-letter-exchange: <hutch>`: let queue republish message to default <hutch> exchange.
+  - Set `x-message-ttl: <30.days>`: to avoid the queue is to large, because there is no consumer with this queue.
 
 ## Development
 
