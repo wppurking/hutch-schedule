@@ -3,7 +3,6 @@ require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/numeric'
 require 'active_support/core_ext/module/delegation'
 
-# 共享 Hutch::Broker 实例的所有东西
 module Hutch
   module Schedule
     class Core
@@ -12,18 +11,17 @@ module Hutch
 
       delegate :channel, :connection, :logger, to: :broker
 
-      # 初始化 schedule
       def initialize(broker)
         raise "Broker can`t be nil" if broker.blank?
         @broker = broker
       end
 
-      # 获取 Hutch 上的 Config
+      # Use the config with Hutch::Broker instance
       def config
         broker.instance_variable_get(:@config)
       end
 
-      # Core 的连接, 注意连接是有顺序的, 必须先将 exchange 初始化好
+      # Becareful with the sequence of initialize
       def connect!
         declare_exchange!
         declare_publisher!
@@ -34,17 +32,15 @@ module Hutch
         @publisher = Hutch::Publisher.new(connection, channel, exchange, config)
       end
 
-      # 申明 schedule 使用的 ex
+      # The exchange used by Hutch::Schedule
       def declare_exchange!
         @exchange = declare_exchange
       end
 
       def declare_exchange(ch = channel)
         exchange_name    = "#{config[:mq_exchange]}.schedule"
-        # TODO: 检查 mq_exchange_options 中的信息, 确保不会覆盖 x-dead-letter-exchange 的参数
-        exchange_options = {
-          durable:                  true,
-          'x-dead-letter-exchange': config[:mq_exchange] }.merge(config[:mq_exchange_options])
+        # TODO: Check mq_exchange_options info, ensure they won`t override x-dead-letter-exchange params
+        exchange_options = { durable: true }.merge(config[:mq_exchange_options])
         logger.info "using topic exchange(schedule) '#{exchange_name}'"
 
         broker.send(:with_bunny_precondition_handler, 'schedule exchange') do
@@ -52,18 +48,19 @@ module Hutch
         end
       end
 
-      # 申明 schedule 使用的 queue
+      # The queue used by Hutch::Schedule
       def setup_queue!
+        # TODO: extract the ttl to config params
         props = { 'x-message-ttl': 30.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
         queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
 
-        # TODO: 可以考虑将这个抽取成为参数
+        # TODO: consider extract this routing_key params to config params
         # routing all to this queue
         queue.unbind(exchange, routing_key: '#')
         queue.bind(exchange, routing_key: '#')
       end
 
-      # Schedule broker 自己的 publish 方法
+      # Schedule`s publisher, publish the message to schedule topic exchange
       def publish(*args)
         @publisher.publish(*args)
       end

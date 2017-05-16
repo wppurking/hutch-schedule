@@ -4,14 +4,15 @@ require 'hutch'
 require 'hutch/enqueue'
 require 'hutch/schedule/core'
 
-# 引入了 active_job 则引入 adapter
+# If ActiveJob is requried then required the adapter
 if defined?(ActiveJob)
   require 'active_job/queue_adapters/hutch_adapter'
 end
 
-# gem 的核心入口文件
 module Hutch
-  # 在 Hutch 下的独立的 Schedule module, 负责与 schedule 相关的 publish
+  # Hutch::Schedule, just an addon to deal with the schedule exchange.
+  # If you want use it, just do `Hutch::Schedule.connect(Hutch.broker)` to initialize it
+  # and then just use like Hutch to publish message `Hutch::Schedule.publish`
   module Schedule
 
     def self.connect(broker)

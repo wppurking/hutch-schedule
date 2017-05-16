@@ -3,33 +3,34 @@ require 'active_support/core_ext/numeric/time'
 require 'hutch/schedule'
 
 module Hutch
-  # 如果需要增加让 Consumer Enqueue 的动作, 那么则 include 这个 Module
+  # If consumer need `enqueue`, just include this module
   module Enqueue
     extend ActiveSupport::Concern
 
     # Add Consumer methods
     class_methods do
-      # 正常的发布 consumer 对应 routing key 的消息
+      # Publish the message to this consumer with one routing_key
       def enqueue(message)
         Hutch.publish(enqueue_routing_key, message)
       end
 
       # publish message at a delay times
-      # interval: 推迟的时间
-      # message: 具体的消息
+      # interval: delay interval
+      # message: publish message
       def enqueue_in(interval, message)
         props = { expiration: interval.in_milliseconds.to_i }
         Hutch::Schedule.publish(enqueue_routing_key, message, props)
       end
 
-      # 延期在某一个时间点执行
+      # delay at exatly time point
       def enqueue_at(time, message)
-        # 如果 time 比当前时间还早, 那么就延迟 1s 钟执行
+        # if time is early then now then just delay 1 second
         interval = [(time.utc - Time.now.utc), 1.second].max
         enqueue_in(interval, message)
       end
 
-      # routing_key: 目的为将 Message 发送给 RabbitMQ 那么使用其监听的任何一个 routing_key 都可以发送
+      # routing_key: the purpose is to send message to hutch exchange and then routing to the correct queue,
+      # so can use any of them routing_key that the consumer is consuming.
       def enqueue_routing_key
         raise "Routing Keys is not set!" if routing_keys.size < 1
         routing_keys.to_a.last
