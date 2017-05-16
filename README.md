@@ -30,8 +30,8 @@ Hutch::Config.setup_procs  << -> {
 
 They will do something below:
 
-1. Declear an topic exchange called <hutch>.schedule just for routing message to schedule_queue.
-2. Declear an queue named <hutch>_schedule_queue and with some params:
+1. Declear an topic exchange called `<hutch>.schedule` just for routing message to schedule_queue.
+2. Declear an queue named `<hutch>_schedule_queue` and with some params:
   - Set `x-dead-letter-exchange: <hutch>`: let queue republish message to default <hutch> exchange.
   - Set `x-message-ttl: <30.days>`: to avoid the queue is to large, because there is no consumer with this queue.
 
