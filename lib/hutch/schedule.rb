@@ -15,7 +15,7 @@ module Hutch
   # and then just use like Hutch to publish message `Hutch::Schedule.publish`
   module Schedule
 
-    def self.connect(broker)
+    def self.connect(broker = Hutch.broker)
       return if core.present?
       @core = Hutch::Schedule::Core.new(broker)
       @core.connect!

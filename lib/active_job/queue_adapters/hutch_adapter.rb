@@ -18,7 +18,7 @@ module ActiveJob
 
       def enqueue(job) #:nodoc:
         @monitor.synchronize do
-          # 将整个 job 的 data 变为 hash 发布出去
+          # publish all job data to hutch
           Hutch.publish(routing_key(job), job.serialize)
         end
       end
@@ -30,7 +30,7 @@ module ActiveJob
 
       def enqueue_in(interval, message, routing_key)
         @monitor.synchronize do
-          # 必须是 integer
+          # must be integer
           props = { expiration: interval.in_milliseconds.to_i }
           Hutch::Schedule.publish(routing_key, message, props)
         end
