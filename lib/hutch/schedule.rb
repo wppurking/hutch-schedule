@@ -17,7 +17,7 @@ module Hutch
   module Schedule
 
     def self.connect(broker = Hutch.broker)
-      raise "Please invoke Hutch.connect before Hutch::Schedule.connect, Hutch::Schedule need Hutch.broker" if Hutch.connected?
+      raise "Please invoke Hutch.connect before Hutch::Schedule.connect, Hutch::Schedule need Hutch.broker" unless Hutch.connected?
       return if core.present?
       @core = Hutch::Schedule::Core.new(broker)
       @core.connect!
