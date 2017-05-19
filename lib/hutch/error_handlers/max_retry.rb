@@ -5,9 +5,6 @@ module Hutch
     class MaxRetry
       include Logging
 
-      def initialize
-      end
-
       # TODO: Need to be implement.
       # 1. 获取 hutch 本身记录的 x-death 中的错误次数
       # 2. 从每一个 consumer 身上寻找 max_retry 的次数, 不超过则进行延迟重试
