@@ -19,13 +19,13 @@ module ActiveJob
       def enqueue(job) #:nodoc:
         @monitor.synchronize do
           # publish all job data to hutch
-          Hutch.publish(routing_key(job), job.serialize)
+          Hutch.publish(HutchAdapter.routing_key(job), job.serialize)
         end
       end
 
       def enqueue_at(job, timestamp) #:nodoc:
         interval = [(timestamp - Time.now.utc.to_i), 1.second].max
-        enqueue_in(interval, job.serialize, routing_key(job))
+        enqueue_in(interval, job.serialize, HutchAdapter.routing_key(job))
       end
 
       def enqueue_in(interval, message, routing_key)
@@ -37,17 +37,26 @@ module ActiveJob
       end
 
       # Get an routing_key
-      def routing_key(job)
+      def self.routing_key(job)
         "#{AJ_ROUTING_KEY}.#{job.queue_name}"
       end
 
-      class JobWrapper #:nodoc:
-        include Hutch::Consumer
-        # Consume All active_job.# routing_key message to this consume`s queue
-        consume "#{HutchAdapter::AJ_ROUTING_KEY}.#"
+      # Register all ActiveJob Class to Hutch. (per queue per consumer)
+      def self.register_actice_job_classes
+        Dir.glob(Rails.root.join('app/jobs/**/*.rb')).each { |x| require_dependency x }
+        ActiveJob::Base.descendants.each do |job|
+          Hutch.consumers << Class.new do
+            extend Hutch::Consumer::ClassMethods
 
-        def process(job_data)
-          Base.execute job_data
+            attr_accessor :broker, :delivery_info
+
+            queue_name job.queue_name
+            consume HutchAdapter.routing_key(job)
+
+            define_method :process do |job_data|
+              ActiveJob::Base.execute(job_data)
+            end
+          end
         end
       end
     end
