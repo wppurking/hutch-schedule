@@ -7,11 +7,6 @@ module Hutch
     class MaxRetry
       include Logging
 
-      # TODO: Need to be implement.
-      # 1. 获取 hutch 本身记录的 x-death 中的错误次数
-      # 2. 从每一个 consumer 身上寻找 max_retry 的次数, 不超过则进行延迟重试
-      # 3. 根据错误次数计算类似 active_job 的 exponentially_longer 延迟时间
-      #
       # properties.headers example:
       # {
       #   "x-death": [
@@ -44,14 +39,14 @@ module Hutch
           return false
         end
 
-        prop_headers = properties[:headers]
+        prop_headers = properties[:headers] || {}
         attempts     = failure_count(prop_headers, consumer) + 1
         if attempts <= consumer.max_attempts
           logger.debug("retrying, count=#{attempts}, headers:#{prop_headers}")
           # execute_times = attempts - 1
           consumer.enqueue_in(retry_delay(attempts - 1), MultiJson.decode(payload), { headers: prop_headers })
         else
-          logger.debug("failing, retry_count=#{attempts}, headers:#{prop_headers}")
+          logger.debug("failing, retry_count=#{attempts}, ex:#{ex}, headers: #{prop_headers}")
         end
       end
 
