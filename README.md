@@ -23,9 +23,8 @@ Or install it yourself as:
 Use the code below to initialize the Hutch::Schedule
 
 ```ruby
-Hutch::Config.setup_procs  << -> {
-	Hutch::Schedule.connect(Hutch.broker)
-}
+Hutch.connect
+Hutch::Schedule.connect
 ```
 
 They will do something below:
@@ -34,6 +33,71 @@ They will do something below:
 2. Declear an queue named `<hutch>_schedule_queue` and with some params:
   - Set `x-dead-letter-exchange: <hutch>`: let queue republish message to default <hutch> exchange.
   - Set `x-message-ttl: <30.days>`: to avoid the queue is to large, because there is no consumer with this queue.
+3. If ActiveJob is loaded. it will use `ActiveJob::Base.descendants` to register all ActiveJob class to one-job-per-consumer to Hutch::Consumer 
+
+
+### Error Retry
+If you want use error retry, then:
+
+1. Add `Hutch::ErrorHandlers::MaxRetry` to `Hutch::Config.error_handlers` like below
+```ruby
+Hutch::Config.error_handlers << Hutch::ErrorHandlers::MaxRetry.new
+```
+
+2. Let `Hutch::Consumer` to include `Hutch::Enqueue` and setup `attempts`
+```ruby
+class PlanConsumer
+  include Hutch::Consumer
+  include Hutch::Enqueue
+  
+  attempts 3
+  consume 'abc.plan'
+end
+```
+
+Error retry will use ActiveJob `exponentially_longer` algorithm `(executes**4) + 2` seconds
+
+
+## Rails
+
+### Work with Hutch it`s self
+Add an `hutch.rb` to `conf/initializers`:
+```ruby
+# reuse Hutch config.yaml file
+Hutch::Config.load_from_file(Rails.root.join('config', 'config.yaml'))
+# replace error_handlers with Hutch::ErrorHandlers::MaxRetry
+Hutch::Config.error_handlers = [Hutch::ErrorHandlers::MaxRetry.new]
+# Init Hutch
+Hutch.connect
+# Init Hutch::Schedule
+Hutch::Schedule.connect
+```
+
+Then you can enqueue message in Rails console like below:
+```ruby
+PlanConsumer.enqueue(a: 1)
+# or schedule message
+PlanConsumer.enqueue_in(5.seconds, a: 1)
+```
+
+### Work with ActiveJob
+```ruby
+class EmailJob < ApplicationJob
+  queue_as :email
+  
+  retry_on StandardError, wait: :exponentially_longer
+  
+  def perform(user_id)
+    user = User.find(user_id)
+    user.send_email
+  end
+end
+
+# in rails console, you can
+EmailJob.perform_later(user.id)
+# or
+EmailJob.set(wait: 5.seconds).perform_later(user.id)
+```
 
 ## Development
 
