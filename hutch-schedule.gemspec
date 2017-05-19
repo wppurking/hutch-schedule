@@ -6,7 +6,7 @@ require 'hutch/schedule/version'
 Gem::Specification.new do |spec|
   spec.name    = "hutch-schedule"
   spec.version = Hutch::Schedule::VERSION
-  spec.authors = ["wyatt pan"]
+  spec.authors = ["Wyatt pan"]
   spec.email   = ["wppurking@gmail.com"]
 
   spec.summary     = %q{Add Schedule and Error Retry To Hutch.}
