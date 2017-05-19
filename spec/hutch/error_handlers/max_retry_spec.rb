@@ -20,6 +20,17 @@ class BowConsume
   end
 end
 
+class NopConsume
+  include Hutch::Consumer
+  include Hutch::Enqueue
+
+  consume 'nop'
+
+  def process(m)
+    puts m
+  end
+end
+
 
 RSpec.describe Hutch::ErrorHandlers::MaxRetry do
 
@@ -85,8 +96,6 @@ RSpec.describe Hutch::ErrorHandlers::MaxRetry do
   end
 
   context 'error retry' do
-
-
     it 'retry: 1' do
       expect(BowConsume).to receive(:enqueue_in).with(2, MultiJson.decode(payload), { headers: {} }).once
       subject.handle(properties, payload, BowConsume, ex)
@@ -114,6 +123,11 @@ RSpec.describe Hutch::ErrorHandlers::MaxRetry do
     it 'retry sum 3, do not republish' do
       expect(BowConsume).to receive(:enqueue_in).exactly(0).times
       subject.handle(properties.merge(headers: m_headers), payload, BowConsume, ex)
+    end
+
+    it 'won`t retry with no attempts params' do
+      expect(NopConsume).to receive(:enqueue_in).exactly(0).times
+      subject.handle(properties.merge(headers: headers), payload, NopConsume, ex)
     end
   end
 end

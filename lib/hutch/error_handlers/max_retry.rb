@@ -3,7 +3,8 @@ require 'hutch/logging'
 module Hutch
   module ErrorHandlers
 
-    # 目的: 在达到 MaxRetry 之前, 认为这个 message 是正常的, 直到超过 MaxRetry 再进入正常的异常流程
+    # When reach the Max Attempts, republish this message to RabbitMQ,
+    # And persisted the properties[:headers] to tell RabbitMQ the `x-dead.count`
     class MaxRetry
       include Logging
 
