@@ -1,4 +1,5 @@
 require 'hutch/logging'
+require 'active_support/core_ext/object/blank'
 
 module Hutch
   module ErrorHandlers
@@ -47,7 +48,7 @@ module Hutch
           # execute_times = attempts - 1
           consumer.enqueue_in(retry_delay(attempts - 1), MultiJson.decode(payload), { headers: prop_headers })
         else
-          logger.debug("failing, retry_count=#{attempts}, ex:#{ex}, headers: #{prop_headers}")
+          logger.debug("failing, retry_count=#{attempts}, ex:#{ex}")
         end
       end
 
@@ -60,7 +61,7 @@ module Hutch
           0
         else
           x_death_array = headers['x-death'].select do |x_death|
-            x_death['routing-keys'].include?(consumer.enqueue_routing_key)
+            (x_death['routing-keys'].presence || []).to_set.intersect?(consumer.routing_keys)
           end
 
           if x_death_array.count > 0 && x_death_array.first['count']
