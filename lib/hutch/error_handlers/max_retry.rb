@@ -61,6 +61,7 @@ module Hutch
           0
         else
           x_death_array = headers['x-death'].select do |x_death|
+            # http://ruby-doc.org/stdlib-2.2.3/libdoc/set/rdoc/Set.html#method-i-intersect-3F
             (x_death['routing-keys'].presence || []).to_set.intersect?(consumer.routing_keys)
           end
 
