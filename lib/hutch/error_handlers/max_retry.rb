@@ -2,6 +2,8 @@ require 'hutch/logging'
 
 module Hutch
   module ErrorHandlers
+
+    # 目的: 在达到 MaxRetry 之前, 认为这个 message 是正常的, 直到超过 MaxRetry 再进入正常的异常流程
     class MaxRetry
       include Logging
 
@@ -37,7 +39,42 @@ module Hutch
       #   ]
       # }
       def handle(properties, payload, consumer, ex)
-        raise "Not implement"
+        unless consumer.ancestors.include?(Hutch::Enqueue)
+          logger.warn("Consumer: #{consumer} is not include Hutch::Enqueue can`t use #enqueue_in`")
+          return false
+        end
+
+        prop_headers = properties[:headers]
+        attempts     = failure_count(prop_headers, consumer) + 1
+        if attempts <= consumer.max_attempts
+          logger.debug("retrying, count=#{attempts}, headers:#{prop_headers}")
+          # execute_times = attempts - 1
+          consumer.enqueue_in(retry_delay(attempts - 1), MultiJson.decode(payload), { headers: prop_headers })
+        else
+          logger.debug("failing, retry_count=#{attempts}, headers:#{prop_headers}")
+        end
+      end
+
+      def retry_delay(executes)
+        (executes**4) + 2
+      end
+
+      def failure_count(headers, consumer)
+        if headers.nil? || headers['x-death'].nil?
+          0
+        else
+          x_death_array = headers['x-death'].select do |x_death|
+            x_death['routing-keys'].include?(consumer.enqueue_routing_key)
+          end
+
+          if x_death_array.count > 0 && x_death_array.first['count']
+            # Newer versions of RabbitMQ return headers with a count key
+            x_death_array.inject(0) { |sum, x_death| sum + x_death['count'] }
+          else
+            # Older versions return a separate x-death header for each failure
+            x_death_array.count
+          end
+        end
       end
     end
   end
