@@ -117,6 +117,8 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/wppurk
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
 
 ## Performance
+Use the repo: https://github.com/wppurking/hutch-schedule-demo
+
 #### ActiveJob enqueue
 ![ActiveJob enqueue](http://ofooyx8i9.bkt.clouddn.com/enqueue.jpg)
 
