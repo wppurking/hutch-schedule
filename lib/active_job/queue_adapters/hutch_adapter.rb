@@ -56,6 +56,11 @@ module ActiveJob
             define_method :process do |job_data|
               ActiveJob::Base.execute(job_data)
             end
+
+            # inspect name
+            define_method :inspect do
+              "#{job.queue_name}-anonymous-consumer"
+            end
           end
         end
       end
