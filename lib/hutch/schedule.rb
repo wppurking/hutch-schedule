@@ -19,6 +19,7 @@ module Hutch
       return if core.present?
       @core = Hutch::Schedule::Core.new(broker)
       @core.connect!
+      ActiveJob::QueueAdapters::HutchAdapter.register_actice_job_classes if defined?(ActiveJob::QueueAdapters::HutchAdapter)
     end
 
     def self.core
