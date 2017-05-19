@@ -116,3 +116,15 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/wppurk
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
 
+## Performance
+#### ActiveJob enqueue
+![ActiveJob enqueue](http://ofooyx8i9.bkt.clouddn.com/enqueue.jpg)
+
+#### Hutch publish message
+![Hutch publish message](http://ofooyx8i9.bkt.clouddn.com/enqueue_raw.jpg)
+
+#### ActiveJob dequeue to execute
+![ActiveJob dequeue to execute](http://ofooyx8i9.bkt.clouddn.com/consume.jpg)
+
+#### Hutch dequeue to execute
+![Hutch dequeue to execute](http://ofooyx8i9.bkt.clouddn.com/consume2.jpg)
