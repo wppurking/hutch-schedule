@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency 'hutch', '~> 0.24'
+  spec.add_runtime_dependency "multi_json"
 
   spec.add_development_dependency "activejob"
   spec.add_development_dependency "bundler", "~> 1.14"
