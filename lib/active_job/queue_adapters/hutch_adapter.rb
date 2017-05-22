@@ -44,7 +44,10 @@ module ActiveJob
       # Register all ActiveJob Class to Hutch. (per queue per consumer)
       def self.register_actice_job_classes
         Dir.glob(Rails.root.join('app/jobs/**/*.rb')).each { |x| require_dependency x }
-        ActiveJob::Base.descendants.each do |job|
+        ActiveJob::Base.descendants.each do |job_clazz|
+          # Need activeJob instance #queue_name
+          job = job_clazz.new
+
           Hutch.consumers << Class.new do
             extend Hutch::Consumer::ClassMethods
 
@@ -59,7 +62,7 @@ module ActiveJob
 
             # inspect name
             define_method :inspect do
-              "#{job.queue_name}-anonymous-consumer"
+              "#{job_clazz.queue_name}-anonymous-consumer"
             end
           end
         end
