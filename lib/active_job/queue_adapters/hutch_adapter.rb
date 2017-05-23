@@ -43,27 +43,36 @@ module ActiveJob
 
       # Register all ActiveJob Class to Hutch. (per queue per consumer)
       def self.register_actice_job_classes
+        queue_consumers = {}
+
         Dir.glob(Rails.root.join('app/jobs/**/*.rb')).each { |x| require_dependency x }
         ActiveJob::Base.descendants.each do |job_clazz|
           # Need activeJob instance #queue_name
           job = job_clazz.new
+          # Multi queue only have one consumer
+          next if queue_consumers.key?(job.queue_name)
+          queue_consumers[job.queue_name] = HutchAdapter.dynamic_consumer(job)
+          Hutch.consumers << queue_consumers[job.queue_name]
+        end
+      end
 
-          Hutch.consumers << Class.new do
-            extend Hutch::Consumer::ClassMethods
+      private
+      def self.dynamic_consumer(job_instance)
+        Class.new do
+          extend Hutch::Consumer::ClassMethods
 
-            attr_accessor :broker, :delivery_info
+          attr_accessor :broker, :delivery_info
 
-            queue_name job.queue_name
-            consume HutchAdapter.routing_key(job)
+          queue_name job_instance.queue_name
+          consume HutchAdapter.routing_key(job_instance)
 
-            define_method :process do |job_data|
-              ActiveJob::Base.execute(job_data)
-            end
+          define_method :process do |job_data|
+            ActiveJob::Base.execute(job_data)
+          end
 
-            # inspect name
-            define_method :inspect do
-              "#{job_clazz.queue_name}-anonymous-consumer"
-            end
+          # inspect name
+          define_method :inspect do
+            "#{job_instance.queue_name}-anonymous-consumer"
           end
         end
       end
