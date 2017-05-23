@@ -52,7 +52,7 @@ module ActiveJob
           # Multi queue only have one consumer
           next if queue_consumers.key?(job.queue_name)
           queue_consumers[job.queue_name] = HutchAdapter.dynamic_consumer(job)
-          Hutch.consumers << queue_consumers[job.queue_name]
+          Hutch.register_consumer(queue_consumers[job.queue_name])
         end
       end
 
