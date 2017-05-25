@@ -43,6 +43,7 @@ module ActiveJob
 
       # Register all ActiveJob Class to Hutch. (per queue per consumer)
       def self.register_actice_job_classes
+        # TODO: 需要考虑如何将 AJ 的 Proc queue_name 动态注册到 Hutch
         queue_consumers = {}
 
         Dir.glob(Rails.root.join('app/jobs/**/*.rb')).each { |x| require_dependency x }
