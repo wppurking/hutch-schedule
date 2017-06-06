@@ -39,7 +39,6 @@ module Hutch
 
       def declare_exchange(ch = channel)
         exchange_name    = "#{config[:mq_exchange]}.schedule"
-        # TODO: Check mq_exchange_options info, ensure they won`t override x-dead-letter-exchange params
         exchange_options = { durable: true }.merge(config[:mq_exchange_options])
         logger.info "using topic exchange(schedule) '#{exchange_name}'"
 
@@ -54,7 +53,6 @@ module Hutch
         props = { 'x-message-ttl': 30.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
         queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
 
-        # TODO: consider extract this routing_key params to config params
         # routing all to this queue
         queue.unbind(exchange, routing_key: '#')
         queue.bind(exchange, routing_key: '#')
