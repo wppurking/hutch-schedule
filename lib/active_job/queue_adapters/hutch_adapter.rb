@@ -67,13 +67,17 @@ module ActiveJob
           queue_name job_instance.queue_name
           consume HutchAdapter.routing_key(job_instance)
 
-          define_method :process do |job_data|
+          def process(job_data)
             ActiveJob::Base.execute(job_data)
           end
 
           # inspect name
-          define_method :inspect do
-            "#{job_instance.queue_name}-anonymous-consumer"
+          def inspect
+            self.class.name
+          end
+
+          define_singleton_method :name do
+            "#{job_instance.queue_name}_dynamic_consumer".camelize
           end
         end
       end
