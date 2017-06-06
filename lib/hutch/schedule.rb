@@ -16,10 +16,10 @@ module Hutch
   # and then just use like Hutch to publish message `Hutch::Schedule.publish`
   module Schedule
 
-    def self.connect(broker = Hutch.broker)
-      raise "Please invoke Hutch.connect before Hutch::Schedule.connect, Hutch::Schedule need Hutch.broker" unless Hutch.connected?
+    def self.connect
       return if core.present?
-      @core = Hutch::Schedule::Core.new(broker)
+      Hutch.connect unless Hutch.connected?
+      @core = Hutch::Schedule::Core.new(Hutch.broker)
       @core.connect!
       ActiveJob::QueueAdapters::HutchAdapter.register_actice_job_classes if defined?(ActiveJob::QueueAdapters::HutchAdapter)
     end
