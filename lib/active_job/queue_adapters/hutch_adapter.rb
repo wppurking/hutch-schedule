@@ -79,6 +79,10 @@ module ActiveJob
           define_singleton_method :inspect do
             "#{job_instance.queue_name}_dynamic_consumer".camelize
           end
+
+          define_singleton_method :to_s do
+            "#{job_instance.queue_name}_dynamic_consumer".camelize
+          end
         end
       end
     end
