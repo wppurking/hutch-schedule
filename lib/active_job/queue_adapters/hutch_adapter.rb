@@ -71,12 +71,12 @@ module ActiveJob
             ActiveJob::Base.execute(job_data)
           end
 
-          # inspect name
-          def inspect
-            self.class.name
+          define_singleton_method :name do
+            "#{job_instance.queue_name}_dynamic_consumer".camelize
           end
 
-          define_singleton_method :name do
+          # inspect name
+          define_singleton_method :inspect do
             "#{job_instance.queue_name}_dynamic_consumer".camelize
           end
         end
