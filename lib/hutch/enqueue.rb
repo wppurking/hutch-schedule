@@ -18,8 +18,11 @@ module Hutch
       # interval: delay interval
       # message: publish message
       def enqueue_in(interval, message, props = {})
-        properties = props.merge(expiration: interval.in_milliseconds.to_i)
-        Hutch::Schedule.publish(enqueue_routing_key, message, properties)
+        # TODO: 超过 3h 的延迟也会接收, 但是不会延迟那么长时间, 但给予 warn
+        properties = props.merge(expiration: interval.in_milliseconds.to_i, :'x-dead-letter-routing-key' => enqueue_routing_key)
+
+        # TODO: 根据 interval 时间长度计延迟长度
+        Hutch::Schedule.publish(Hutch::Schedule.delay_routing_key('5s'), message, properties)
       end
 
       # delay at exatly time point

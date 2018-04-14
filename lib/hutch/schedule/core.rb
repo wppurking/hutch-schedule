@@ -6,9 +6,7 @@ require 'active_support/core_ext/module/delegation'
 module Hutch
   module Schedule
     class Core
-
       attr_reader :broker, :exchange
-
       delegate :channel, :connection, :logger, to: :broker
 
       def initialize(broker)
@@ -23,9 +21,9 @@ module Hutch
 
       # Becareful with the sequence of initialize
       def connect!
-        declare_exchange!
+        declare_delay_exchange!
         declare_publisher!
-        setup_queue!
+        setup_delay_queues!
       end
 
       def declare_publisher!
@@ -33,12 +31,12 @@ module Hutch
       end
 
       # The exchange used by Hutch::Schedule
-      def declare_exchange!
-        @exchange = declare_exchange
+      def declare_delay_exchange!
+        @exchange = declare_delay_exchange
       end
 
-      def declare_exchange(ch = channel)
-        exchange_name    = "#{config[:mq_exchange]}.schedule"
+      def declare_delay_exchange(ch = channel)
+        exchange_name = "#{config[:mq_exchange]}.schedule"
         exchange_options = { durable: true }.merge(config[:mq_exchange_options])
         logger.info "using topic exchange(schedule) '#{exchange_name}'"
 
@@ -48,14 +46,18 @@ module Hutch
       end
 
       # The queue used by Hutch::Schedule
-      def setup_queue!
+      def setup_delay_queues!
+        DELAY_QUEUES.map { |suffix| setup_delay_queue!(suffix) }
+      end
+
+      def setup_delay_queue!(suffix)
         # TODO: extract the ttl to config params
-        props = { 'x-message-ttl': 30.days.in_milliseconds, 'x-dead-letter-exchange': config[:mq_exchange] }
-        queue = broker.queue("#{config[:mq_exchange]}_schedule_queue", props)
+        props = { :'x-message-ttl' => 30.days.in_milliseconds, :'x-dead-letter-exchange' => config[:mq_exchange] }
+        queue = broker.queue(Hutch::Schedule.delay_queue_name(suffix), props)
 
         # routing all to this queue
-        queue.unbind(exchange, routing_key: '#')
-        queue.bind(exchange, routing_key: '#')
+        queue.unbind(exchange, routing_key: Hutch::Schedule.delay_routing_key(suffix))
+        queue.bind(exchange, routing_key: Hutch::Schedule.delay_routing_key(suffix))
       end
 
       # Schedule`s publisher, publish the message to schedule topic exchange
