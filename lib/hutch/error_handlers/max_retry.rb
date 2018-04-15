@@ -52,6 +52,8 @@ module Hutch
         end
       end
 
+      # becareful with the RabbitMQ fixed delay level, this retry_dealy seconds will fit to one fixed delay level.
+      # so the max delay time is limit to 3 hours(10800s, error times 11: 14643)
       def retry_delay(executes)
         (executes**4) + 2
       end
