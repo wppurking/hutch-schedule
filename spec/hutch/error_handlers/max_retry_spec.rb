@@ -36,11 +36,11 @@ RSpec.describe Hutch::ErrorHandlers::MaxRetry do
 
   let(:properties) do
     {
-      :content_type  => "application/json",
+      :content_type => "application/json",
       :delivery_mode => 2,
-      :priority      => 0,
-      :message_id    => "0eefe322-a952-4bbb-90ff-c2fa46a021cd",
-      :timestamp     => Time.parse('2017-05-19 13:57:36 +0800')
+      :priority => 0,
+      :message_id => "0eefe322-a952-4bbb-90ff-c2fa46a021cd",
+      :timestamp => Time.parse('2017-05-19 13:57:36 +0800')
     }
   end
 
@@ -48,12 +48,12 @@ RSpec.describe Hutch::ErrorHandlers::MaxRetry do
     {
       "x-death" => [
         {
-          "count"               => 1,
-          "reason"              => "expired",
-          "queue"               => "hutch_schedule_queue",
-          "time"                => Time.parse('2017-05-19 12:32:26 +0800'),
-          "exchange"            => "hutch.schedule",
-          "routing-keys"        => ["bow"],
+          "count" => 1,
+          "reason" => "expired",
+          "queue" => "hutch_schedule_queue",
+          "time" => Time.parse('2017-05-19 12:32:26 +0800'),
+          "exchange" => "hutch.schedule",
+          "routing-keys" => ["hutch.schedule.5s", "bow"],
           "original-expiration" => "2000"
         }
       ]
@@ -64,21 +64,21 @@ RSpec.describe Hutch::ErrorHandlers::MaxRetry do
     {
       "x-death" => [
         {
-          "count"               => 1,
-          "reason"              => "expired",
-          "queue"               => "hutch_schedule_queue",
-          "time"                => Time.parse('2017-05-19 12:32:26 +0800'),
-          "exchange"            => "hutch.schedule",
-          "routing-keys"        => ["bow"],
+          "count" => 1,
+          "reason" => "expired",
+          "queue" => "hutch_schedule_queue",
+          "time" => Time.parse('2017-05-19 12:32:26 +0800'),
+          "exchange" => "hutch.schedule",
+          "routing-keys" => ["hutch.schedule.5s", "bow"],
           "original-expiration" => "2000"
         },
         {
-          "count"               => 2,
-          "reason"              => "expired",
-          "queue"               => "hutch_schedule_queue",
-          "time"                => Time.parse('2017-05-19 12:32:26 +0800'),
-          "exchange"            => "hutch.schedule",
-          "routing-keys"        => ["bow"],
+          "count" => 2,
+          "reason" => "expired",
+          "queue" => "hutch_schedule_queue",
+          "time" => Time.parse('2017-05-19 12:32:26 +0800'),
+          "exchange" => "hutch.schedule",
+          "routing-keys" => ["hutch.schedule.5s", "bow"],
           "original-expiration" => "2000"
         }
       ]
@@ -103,7 +103,7 @@ RSpec.describe Hutch::ErrorHandlers::MaxRetry do
 
     it 'retry: 2' do
       expect(BowConsume).to receive(:enqueue_in).with(3, MultiJson.decode(payload), { headers: headers }).once
-      h                                      = headers.clone
+      h = headers.clone
       h['x-death'][0]['original-expiration'] = '2000'
       subject.handle(properties.merge(headers: h), payload, BowConsume, ex)
     end
