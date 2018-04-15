@@ -15,7 +15,11 @@ module Hutch
   # If you want use it, just do `Hutch::Schedule.connect(Hutch.broker)` to initialize it
   # and then just use like Hutch to publish message `Hutch::Schedule.publish`
   module Schedule
-    DELAY_QUEUES = %w(5s 10s 30s 60s 120s 180s 3600s 7200s 10800s)
+    # 时间颗粒度:
+    # 秒(4): 5s, 10s, 20s, 30s
+    # 分(13): 1m, 2m, 3m, 4m, 5m, 6m, 7m, 8m, 9m, 10m, 20m, 30m, 40m
+    # 时(3): 1h, 2h, 3h
+    DELAY_QUEUES = %w(5s 10s 20s 30s 60s 120s 180s 240s 300s 360s 420s 480s 540s 600s 1200s 1800s 2400s 3600s 7200s 10800s)
 
     class << self
       def connect
