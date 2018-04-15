@@ -16,9 +16,9 @@ module Hutch
   # and then just use like Hutch to publish message `Hutch::Schedule.publish`
   module Schedule
     # 时间颗粒度:
-    # 秒(4): 5s, 10s, 20s, 30s
-    # 分(13): 1m, 2m, 3m, 4m, 5m, 6m, 7m, 8m, 9m, 10m, 20m, 30m, 40m
-    # 时(3): 1h, 2h, 3h
+    # 秒(4): 5s, 10s, 20s, 30s. 适用于比较短, 例如代码级别的稍微等待, 常见的 error retry 的重试.
+    # 分(13): 1m, 2m, 3m, 4m, 5m, 6m, 7m, 8m, 9m, 10m, 20m, 30m, 40m, 50m. 比较常用的延迟, 例如等待 30 分钟后通知
+    # 时(3): 1h, 2h, 3h. 时间稍长的处理, 例如: 定时消息通知
     DELAY_QUEUES = %w(5s 10s 20s 30s 60s 120s 180s 240s 300s 360s 420s 480s 540s 600s 1200s 1800s 2400s 3600s 7200s 10800s)
 
     class << self
