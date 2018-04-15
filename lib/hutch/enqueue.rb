@@ -15,14 +15,17 @@ module Hutch
       end
 
       # publish message at a delay times
-      # interval: delay interval
+      # interval: delay interval seconds
       # message: publish message
       def enqueue_in(interval, message, props = {})
         # TODO: 超过 3h 的延迟也会接收, 但是不会延迟那么长时间, 但给予 warn
-        properties = props.merge(expiration: interval.in_milliseconds.to_i, :'x-dead-letter-routing-key' => enqueue_routing_key)
+        delay_seconds = delay_seconds_level(interval)
 
-        # TODO: 根据 interval 时间长度计延迟长度
-        Hutch::Schedule.publish(Hutch::Schedule.delay_routing_key('5s'), message, properties)
+        # 设置固定的延迟, 利用 headers 中的 CC, 以及区分的 topic, 将消息重新投递进入队列
+        properties = props.merge(expiration: (delay_seconds * 1000).to_i, headers: { :'CC' => [enqueue_routing_key] })
+        delay_routing_key = Hutch::Schedule.delay_routing_key("#{delay_seconds}s")
+
+        Hutch::Schedule.publish(delay_routing_key, message, properties)
       end
 
       # delay at exatly time point
@@ -45,6 +48,57 @@ module Hutch
 
       def max_attempts
         @max_retries || 0
+      end
+
+      # 计算 delay 的 level
+      # 5s 10s 20s 30s
+      # 60s 120s 180s 240s 300s 360s 420s 480s 540s 600s 1200s 1800s 2400s
+      # 3600s 7200s 10800s
+      def delay_seconds_level(delay_seconds)
+        case delay_seconds
+        when 0..5 # 5s
+          5
+        when 5.001..10 # 10s
+          10
+        when 10.001..20 # 20s
+          20
+        when 20.001..30 # 30s
+          30
+        when 30.001..60 # 60s
+          60
+        when 60.001..120 # 120s
+          120
+        when 120.001..180 # 180s
+          180
+        when 180.001..240 # 240s
+          240
+        when 240.001..300 # 300s
+          300
+        when 300.001..360 # 360s
+          360
+        when 360.001..420 # 420s
+          420
+        when 420.001..480 # 480s
+          480
+        when 480.001..540 # 540s
+          540
+        when 540.001..600 # 600s
+          600
+        when 600.001..1200 # 1200s
+          1200
+        when 1200.001..1800 # 1800s
+          1800
+        when 1800.001..2400 # 2400s
+          2400
+        when 2400.001..3600 # 3600s
+          3600
+        when 3600.001..7200 # 7200s
+          7200
+        when 7200.001..10800 # 10800s
+          10800
+        else
+          10800
+        end
       end
     end
   end
