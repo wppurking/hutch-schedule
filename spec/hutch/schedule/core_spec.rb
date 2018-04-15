@@ -10,6 +10,7 @@ class LoadWork
   end
 end
 
+# 需要真正的 rabbitmq 启动
 RSpec.describe Hutch::Schedule::Core do
   it "has a version number" do
     expect(Hutch::Schedule::VERSION).not_to be nil
