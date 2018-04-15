@@ -1,5 +1,15 @@
 require "spec_helper"
 
+class LoadWork
+  include Hutch::Consumer
+  include Hutch::Enqueue
+
+  consume 'load'
+
+  def process(message)
+  end
+end
+
 RSpec.describe Hutch::Schedule::Core do
   it "has a version number" do
     expect(Hutch::Schedule::VERSION).not_to be nil
