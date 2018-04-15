@@ -50,8 +50,7 @@ module Hutch
         props = { :'x-message-ttl' => 30.days.in_milliseconds, :'x-dead-letter-exchange' => Hutch::Config.get(:mq_exchange) }
         queue = broker.queue(Hutch::Schedule.delay_queue_name(suffix), props)
 
-        # routing all to this queue
-        queue.unbind(exchange, routing_key: Hutch::Schedule.delay_routing_key(suffix))
+        # bind routing_key to schedule exchange
         queue.bind(exchange, routing_key: Hutch::Schedule.delay_routing_key(suffix))
       end
 

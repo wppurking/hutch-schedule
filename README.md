@@ -47,7 +47,7 @@ According to the RabbitMQ [TTL Message design limits](http://www.rabbitmq.com/tt
 We design the fixed delay level from seconds to hours, below is the details:
 
 * seconds(4): 5s, 10s, 20s, 30s
-* minutes(13): 1m, 2m, 3m, 4m, 5m, 6m, 7m, 8m, 9m, 10m, 20m, 30m, 40m, 50m
+* minutes(14): 1m, 2m, 3m, 4m, 5m, 6m, 7m, 8m, 9m, 10m, 20m, 30m, 40m, 50m
 * hours(3): 1h, 2h, 3h
 
 RabbitMQ is not fit for storage lot`s of delay message so if you want delay an message beyand 3 hours so you need to storage it
