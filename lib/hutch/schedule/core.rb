@@ -14,11 +14,6 @@ module Hutch
         @broker = broker
       end
 
-      # Use the config with Hutch::Broker instance
-      def config
-        broker.instance_variable_get(:@config)
-      end
-
       # Becareful with the sequence of initialize
       def connect!
         declare_delay_exchange!
@@ -27,7 +22,7 @@ module Hutch
       end
 
       def declare_publisher!
-        @publisher = Hutch::Publisher.new(connection, channel, exchange, config)
+        @publisher = Hutch::Publisher.new(connection, channel, exchange)
       end
 
       # The exchange used by Hutch::Schedule
@@ -36,8 +31,8 @@ module Hutch
       end
 
       def declare_delay_exchange(ch = channel)
-        exchange_name = "#{config[:mq_exchange]}.schedule"
-        exchange_options = { durable: true }.merge(config[:mq_exchange_options])
+        exchange_name = "#{Hutch::Config.get(:mq_exchange)}.schedule"
+        exchange_options = { durable: true }.merge(Hutch::Config.get(:mq_exchange_options))
         logger.info "using topic exchange(schedule) '#{exchange_name}'"
 
         broker.send(:with_bunny_precondition_handler, 'schedule exchange') do
@@ -52,7 +47,7 @@ module Hutch
 
       def setup_delay_queue!(suffix)
         # TODO: extract the ttl to config params
-        props = { :'x-message-ttl' => 30.days.in_milliseconds, :'x-dead-letter-exchange' => config[:mq_exchange] }
+        props = { :'x-message-ttl' => 30.days.in_milliseconds, :'x-dead-letter-exchange' => Hutch::Config.get(:mq_exchange) }
         queue = broker.queue(Hutch::Schedule.delay_queue_name(suffix), props)
 
         # routing all to this queue
