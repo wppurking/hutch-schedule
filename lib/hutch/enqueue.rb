@@ -30,8 +30,10 @@ module Hutch
 
       # delay at exatly time point
       def enqueue_at(time, message, props = {})
+        # compatible with with ActiveJob API
+        time_or_timestamp = time.respond_to?(:utc) ? time.utc.to_f : time
         # if time is early then now then just delay 1 second
-        interval = [(time.utc - Time.now.utc), 1.second].max
+        interval = [(time_or_timestamp - Time.now.utc.to_f), 1.second].max
         enqueue_in(interval, message, props)
       end
 

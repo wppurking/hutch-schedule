@@ -11,6 +11,7 @@ module ActiveJob
       # All activejob Message will routing to one RabbitMQ Queue.
       # Because Hutch will one Consumer per Queue
       AJ_ROUTING_KEY = "active_job"
+      @@queue_consumers = {}
 
       def initialize
         @monitor = Monitor.new
@@ -18,21 +19,13 @@ module ActiveJob
 
       def enqueue(job) #:nodoc:
         @monitor.synchronize do
-          # publish all job data to hutch
-          Hutch.publish(HutchAdapter.routing_key(job), job.serialize)
+          @@queue_consumers[job.queue_name].enqueue(job.serialize)
         end
       end
 
       def enqueue_at(job, timestamp) #:nodoc:
-        interval = [(timestamp - Time.now.utc.to_i), 1.second].max
-        enqueue_in(interval, job.serialize, HutchAdapter.routing_key(job))
-      end
-
-      def enqueue_in(interval, message, routing_key)
         @monitor.synchronize do
-          # must be integer
-          props = { expiration: interval.in_milliseconds.to_i }
-          Hutch::Schedule.publish(routing_key, message, props)
+          @@queue_consumers[job.queue_name].enqueue_at(timestamp, job.serialize)
         end
       end
 
@@ -44,23 +37,23 @@ module ActiveJob
       # Register all ActiveJob Class to Hutch. (per queue per consumer)
       def self.register_actice_job_classes
         # TODO: 需要考虑如何将 AJ 的 Proc queue_name 动态注册到 Hutch
-        queue_consumers = {}
-
         Dir.glob(Rails.root.join('app/jobs/**/*.rb')).each { |x| require_dependency x }
         ActiveJob::Base.descendants.each do |job_clazz|
           # Need activeJob instance #queue_name
           job = job_clazz.new
           # Multi queue only have one consumer
-          next if queue_consumers.key?(job.queue_name)
-          queue_consumers[job.queue_name] = HutchAdapter.dynamic_consumer(job)
-          Hutch.register_consumer(queue_consumers[job.queue_name])
+          next if @@queue_consumers.key?(job.queue_name)
+          @@queue_consumers[job.queue_name] = HutchAdapter.dynamic_consumer(job)
+          Hutch.register_consumer(@@queue_consumers[job.queue_name])
         end
       end
 
       private
       def self.dynamic_consumer(job_instance)
         Class.new do
+          # don't include Hutch::Consumer, we should change the name of consumer to registe
           extend Hutch::Consumer::ClassMethods
+          include Hutch::Enqueue
 
           attr_accessor :broker, :delivery_info
 
