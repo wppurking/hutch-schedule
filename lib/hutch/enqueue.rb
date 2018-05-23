@@ -22,7 +22,8 @@ module Hutch
         delay_seconds = delay_seconds_level(interval)
 
         # 设置固定的延迟, 利用 headers 中的 CC, 以及区分的 topic, 将消息重新投递进入队列
-        properties = props.merge(expiration: (delay_seconds * 1000).to_i, headers: { :'CC' => [enqueue_routing_key] })
+        prop_headers = props[:headers] || {}
+        properties = props.merge(expiration: (delay_seconds * 1000).to_i, headers: prop_headers.merge(CC: [enqueue_routing_key]))
         delay_routing_key = Hutch::Schedule.delay_routing_key("#{delay_seconds}s")
 
         Hutch::Schedule.publish(delay_routing_key, message, properties)
