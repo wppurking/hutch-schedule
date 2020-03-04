@@ -139,3 +139,10 @@ Use the repo: https://github.com/wppurking/hutch-schedule-demo
 
 #### Hutch dequeue to execute
 ![Hutch dequeue to execute](http://ofooyx8i9.bkt.clouddn.com/consume2.jpg)
+
+
+# TODO
+* simplify usage
+* add rate limit to hutch, per queue with dynamic key. process level and global level.
+* add cron job support
+* add unique job support
