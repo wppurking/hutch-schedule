@@ -35,11 +35,42 @@ module Hutch
     
     def handle_message_with_limits(consumer, delivery_info, properties, payload)
       puts 'handle_message_with_limits.......'
-      handle_message(consumer, delivery_info, properties, payload)
+      # 1. consumer.limit?
+      # 2. yes: make and ConsumerMsg to queue
+      # 3. no: post handle
+      @message_worker.post do
+        handle_message(consumer, delivery_info, properties, payload)
+      end
     end
     
+    # 每隔一段时间, 从 buffer queue 中转移任务到执行
     def retry_buffer_queue
-      puts 'retry_buffer_queue'
+      # TODO: 这个 100 需要提取为参数
+      100.times do
+        cmsg = pop_one_from_buffer
+        return if cmsg.blank?
+        handle_message_with_limits(cmsg.consumer, cmsg.delivery_info, cmsg.properties, cmsg.payload)
+      end
+    end
+    
+    def pop_one_from_buffer
+      # TODO: 可以采用 pop(true) 改为 non-blocking 但需要处理额外抛出的 ThreadErr
+      return if @buffer_queue.size <= 0
+      @buffer_queue.pop
+    end
+  end
+  
+  class ConsumerMsg
+    attr_reader :consumer, :delivery_info, :properties, :payload
+    
+    def initialize(consumer, delivery_info, properties, payload)
+      @consumer      = consumer
+      @delivery_info = delivery_info
+      @properties    = properties
+      @payload       = payload
     end
   end
 end
+
+
+
