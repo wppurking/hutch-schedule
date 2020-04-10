@@ -33,7 +33,7 @@ RSpec.describe Hutch::Schedule::Core do
     end
     
     # 用于手动测试 woker
-    it 'process', skip: true do
+    it 'process', skip: false do
       Hutch::Schedule.connect
       @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
       @worker.run

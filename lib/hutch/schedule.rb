@@ -1,11 +1,12 @@
 require 'active_support/core_ext/module/delegation'
 require 'active_support/core_ext/object/blank'
 require 'hutch'
+require 'hutch/patch/config'
+require 'hutch/patch/worker'
+require 'hutch/schedule/core'
 require 'hutch/enqueue'
 require 'hutch/threshold'
 require 'hutch/error_handlers/max_retry'
-require 'hutch/schedule/core'
-require 'hutch/patch/worker'
 
 # If ActiveJob is requried then required the adapter
 if defined?(ActiveJob)

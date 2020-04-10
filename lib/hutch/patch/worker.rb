@@ -11,11 +11,12 @@ module Hutch
       self.consumers   = consumers
       self.setup_procs = setup_procs
       
-      # TODO: 将这个线程变量暴露出去
-      @message_worker = Concurrent::FixedThreadPool.new(20)
-      # TODO: 提取成为参数, 每 5s 执行一次任务
-      @timer_worker = Concurrent::TimerTask.execute(execution_interval: 1) { retry_buffer_queue }
-      @buffer_queue = ::Queue.new
+      @message_worker = Concurrent::FixedThreadPool.new(Hutch::Config.get(:worker_pool_size))
+      @timer_worker   = Concurrent::TimerTask.execute(execution_interval: Hutch::Config.get(:poller_interval)) do
+        retry_buffer_queue
+      end
+      @buffer_queue   = ::Queue.new
+      @batch_size     = Hutch::Config.get(:poller_batch_size)
     end
     
     def shutdown
@@ -33,7 +34,6 @@ module Hutch
       
       queue.subscribe(consumer_tag: unique_consumer_tag, manual_ack: true) do |*args|
         delivery_info, properties, payload = Hutch::Adapter.decode_message(*args)
-        # TODO: 队列本身的 block 只是提交任务给另外的 ThreadPool, 但需要暴露参数, 给到特制的 ThreadPool 拥有能力进行 ratelimit
         handle_message_with_limits(consumer, delivery_info, properties, payload)
       end
     end
@@ -63,9 +63,7 @@ module Hutch
     
     # 每隔一段时间, 从 buffer queue 中转移任务到执行
     def retry_buffer_queue
-      # TODO: 这个 100 需要提取为参数
-      Hutch.logger.info("queue size: #{@buffer_queue.size}")
-      100.times do
+      @batch_size.times do
         cmsg = peak
         return if cmsg.blank?
         handle_message_with_limits(cmsg.consumer, cmsg.delivery_info, cmsg.properties, cmsg.payload)
