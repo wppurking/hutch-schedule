@@ -7,6 +7,7 @@ class LoadWork
   consume 'load'
   
   def process(message)
+    puts "message: #{message}"
   end
 end
 
@@ -28,6 +29,7 @@ RSpec.describe Hutch::Schedule::Core do
     after(:each) do
       Hutch::Schedule::DELAY_QUEUES.each do |suffix|
         queue_name = Hutch::Schedule.delay_queue_name(suffix)
+        puts "Hutch.broker.channel: #{Hutch.broker.channel}"
         Hutch.broker.channel.queue_delete(queue_name)
       end
       Hutch.disconnect
@@ -40,6 +42,15 @@ RSpec.describe Hutch::Schedule::Core do
         queue_name = Hutch::Schedule.delay_queue_name(suffix)
         expect(Hutch.broker.channel.connection.queue_exists?(queue_name)).to be true
       end
+    end
+    
+    # 用于手动测试 woker
+    it 'process', skip: false do
+      Hutch::Schedule.connect
+      puts "Hutch.broker: #{Hutch.broker}"
+      @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
+      @worker.run
+      LoadWork.enqueue(b: 1)
     end
   end
 end

@@ -4,6 +4,7 @@ require 'hutch'
 require 'hutch/enqueue'
 require 'hutch/error_handlers/max_retry'
 require 'hutch/schedule/core'
+require 'hutch/patch/worker'
 
 # If ActiveJob is requried then required the adapter
 if defined?(ActiveJob)
