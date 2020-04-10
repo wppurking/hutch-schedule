@@ -84,9 +84,7 @@ Add an `hutch.rb` to `conf/initializers`:
 Hutch::Config.load_from_file(Rails.root.join('config', 'config.yaml'))
 # replace error_handlers with Hutch::ErrorHandlers::MaxRetry
 Hutch::Config.error_handlers = [Hutch::ErrorHandlers::MaxRetry.new]
-# Init Hutch
-Hutch.connect
-# Init Hutch::Schedule
+# Init Hutch and Hutch::Schedule
 Hutch::Schedule.connect
 ```
 
@@ -128,21 +126,6 @@ The gem is available as open source under the terms of the [MIT License](http://
 ## Performance
 Use the repo: https://github.com/wppurking/hutch-schedule-demo
 
-#### ActiveJob enqueue
-![ActiveJob enqueue](http://ofooyx8i9.bkt.clouddn.com/enqueue.jpg)
-
-#### Hutch publish message
-![Hutch publish message](http://ofooyx8i9.bkt.clouddn.com/enqueue_raw.jpg)
-
-#### ActiveJob dequeue to execute
-![ActiveJob dequeue to execute](http://ofooyx8i9.bkt.clouddn.com/consume.jpg)
-
-#### Hutch dequeue to execute
-![Hutch dequeue to execute](http://ofooyx8i9.bkt.clouddn.com/consume2.jpg)
-
-
 # TODO
-* simplify usage
-* add rate limit to hutch, per queue with dynamic key. process level and global level.
 * add cron job support
 * add unique job support
