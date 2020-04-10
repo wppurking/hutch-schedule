@@ -14,8 +14,13 @@ module Hutch
       # TODO: 将这个线程变量暴露出去
       @message_worker = Concurrent::FixedThreadPool.new(20)
       # TODO: 提取成为参数, 每 5s 执行一次任务
-      @timer_worker = Concurrent::TimerTask.execute(execution_interval: 5) { retry_buffer_queue }
+      @timer_worker = Concurrent::TimerTask.execute(execution_interval: 1) { retry_buffer_queue }
       @buffer_queue = ::Queue.new
+    end
+    
+    def shutdown
+      @message_worker.shutdown
+      @timer_worker.shutdown
     end
     
     # Bind a consumer's routing keys to its queue, and set up a subscription to
@@ -34,13 +39,22 @@ module Hutch
     end
     
     def handle_message_with_limits(consumer, delivery_info, properties, payload)
+      # if Hutch disconnect skip
+      return unless Hutch.connected?
+      
+      # Hutch.logger.info('handle_message_with_limits')
       # 1. consumer.limit?
       # 2. yes: make and ConsumerMsg to queue
       # 3. no: post handle
-      if consumer.ratelimit_exceeded?
-        @buffer_queue.push(ConsumerMsg.new(consumer, delivery_info, properties, payload))
-      else
-        @message_worker.post do
+      @message_worker.post do
+        # if Hutch disconnect skip do work
+        return unless Hutch.connected?
+        
+        if consumer.ratelimit_exceeded?
+          # Hutch.logger.info("#{Thread.current.name} handle_message_with_limits -> ratelimit_exceeded")
+          @buffer_queue.push(ConsumerMsg.new(consumer, delivery_info, properties, payload))
+        else
+          # Hutch.logger.info('handle_message_with_limits -> do work')
           consumer.ratelimit_add
           handle_message(consumer, delivery_info, properties, payload)
         end
@@ -50,6 +64,7 @@ module Hutch
     # 每隔一段时间, 从 buffer queue 中转移任务到执行
     def retry_buffer_queue
       # TODO: 这个 100 需要提取为参数
+      Hutch.logger.info("queue size: #{@buffer_queue.size}")
       100.times do
         cmsg = peak
         return if cmsg.blank?

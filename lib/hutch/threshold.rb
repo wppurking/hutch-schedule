@@ -1,5 +1,4 @@
 require 'active_support/concern'
-require 'hutch/schedule'
 require 'ratelimit'
 
 module Hutch
@@ -34,12 +33,17 @@ module Hutch
           @rate     = args[:rate]
           @interval = args[:interval]
         end
-        @rate_limiter = Ratelimit.new(self.class.name)
+        # redis: 传入设置的 redis
+        # bucket_interval: 记录的间隔, 越小精度越大
+        @rate_limiter = Ratelimit.new(self.name, bucket_interval: 1, redis: nil)
+        @mutex        = Mutex.new
       end
       
       # 判断是否超期
       def ratelimit_exceeded?
-        @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
+        @mutex.synchronize do
+          @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
+        end
       end
       
       # 增加一次调用

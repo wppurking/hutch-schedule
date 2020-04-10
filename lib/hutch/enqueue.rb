@@ -1,6 +1,7 @@
 require 'active_support/concern'
 require 'active_support/core_ext/numeric/time'
 require 'hutch/schedule'
+require 'hutch/threshold'
 
 module Hutch
   # If consumer need `enqueue`, just include this module
