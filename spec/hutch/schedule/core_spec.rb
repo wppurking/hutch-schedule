@@ -1,30 +1,5 @@
 require "spec_helper"
 
-class LoadWork
-  include Hutch::Consumer
-  include Hutch::Enqueue
-  
-  consume 'load'
-  threshold rate: 3, interval: 1
-  
-  def process(message)
-    puts "LoadWork: #{Time.now.to_f} message: #{message.body}"
-  end
-end
-
-class LoadWork2
-  include Hutch::Consumer
-  include Hutch::Enqueue
-  
-  consume 'load2'
-  threshold rate: 1, interval: 2
-  
-  def process(message)
-    puts "LoadWork2: #{Time.now.to_f} message: #{message.body}"
-  end
-end
-
-
 # 需要真正的 rabbitmq 启动
 RSpec.describe Hutch::Schedule::Core do
   it "has a version number" do
@@ -58,7 +33,7 @@ RSpec.describe Hutch::Schedule::Core do
     end
     
     # 用于手动测试 woker
-    it 'process', skip: false do
+    it 'process', skip: true do
       Hutch::Schedule.connect
       @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
       @worker.run

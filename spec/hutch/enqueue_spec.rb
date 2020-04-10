@@ -1,15 +1,5 @@
 require "spec_helper"
 
-class LoadWork
-  include Hutch::Consumer
-  include Hutch::Enqueue
-
-  consume 'load'
-
-  def process(message)
-  end
-end
-
 RSpec.describe Hutch::Enqueue do
   it 'have enqueue, enqueue_in and enqueue_at method' do
     expect(LoadWork.respond_to?(:enqueue)).to eq true

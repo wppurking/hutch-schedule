@@ -21,10 +21,10 @@ module Hutch
       #  - rate: 1, interval: 1, 每秒 1 个
       #  - rate: 30, interval: 1, 每秒 30 个
       #  - rate: 30, interval: 5, 每 5 s, 30 个
-      def threshold(args, &block)
-        @block_given = block_given?
+      def threshold(args)
+        @block_given = args.is_a?(Proc)
         if @block_given
-          @threshold_block = block
+          @threshold_block = args
         else
           raise "need args or block" if args.blank?
           raise "args need hash type" if args.class != Hash
