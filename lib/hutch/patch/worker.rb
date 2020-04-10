@@ -48,13 +48,11 @@ module Hutch
       # 3. no: post handle
       @message_worker.post do
         # if Hutch disconnect skip do work
-        return unless Hutch.connected?
         
         if consumer.ratelimit_exceeded?
-          # Hutch.logger.info("#{Thread.current.name} handle_message_with_limits -> ratelimit_exceeded")
           @buffer_queue.push(ConsumerMsg.new(consumer, delivery_info, properties, payload))
         else
-          # Hutch.logger.info('handle_message_with_limits -> do work')
+          return unless Hutch.connected?
           consumer.ratelimit_add
           handle_message(consumer, delivery_info, properties, payload)
         end
