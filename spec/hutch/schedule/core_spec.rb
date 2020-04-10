@@ -3,9 +3,9 @@ require "spec_helper"
 class LoadWork
   include Hutch::Consumer
   include Hutch::Enqueue
-
+  
   consume 'load'
-
+  
   def process(message)
   end
 end
@@ -15,16 +15,16 @@ RSpec.describe Hutch::Schedule::Core do
   it "has a version number" do
     expect(Hutch::Schedule::VERSION).not_to be nil
   end
-
+  
   it "Hutch config" do
     expect(Hutch::Config.default_config.class).to eq Hash
   end
-
+  
   describe 'running' do
     before(:each) do
       Hutch::Config.set(:mq_vhost, 'ajd')
     end
-
+    
     after(:each) do
       Hutch::Schedule::DELAY_QUEUES.each do |suffix|
         queue_name = Hutch::Schedule.delay_queue_name(suffix)
@@ -32,7 +32,7 @@ RSpec.describe Hutch::Schedule::Core do
       end
       Hutch.disconnect
     end
-
+    
     it 'check delay queue is set' do
       Hutch::Schedule.connect
       expect(Hutch.connected?).to be true
