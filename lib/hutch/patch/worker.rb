@@ -34,12 +34,16 @@ module Hutch
     end
     
     def handle_message_with_limits(consumer, delivery_info, properties, payload)
-      puts 'handle_message_with_limits.......'
       # 1. consumer.limit?
       # 2. yes: make and ConsumerMsg to queue
       # 3. no: post handle
-      @message_worker.post do
-        handle_message(consumer, delivery_info, properties, payload)
+      if consumer.ratelimit_exceeded?
+        @buffer_queue.push(ConsumerMsg.new(consumer, delivery_info, properties, payload))
+      else
+        @message_worker.post do
+          consumer.ratelimit_add
+          handle_message(consumer, delivery_info, properties, payload)
+        end
       end
     end
     
@@ -47,16 +51,17 @@ module Hutch
     def retry_buffer_queue
       # TODO: 这个 100 需要提取为参数
       100.times do
-        cmsg = pop_one_from_buffer
+        cmsg = peak
         return if cmsg.blank?
         handle_message_with_limits(cmsg.consumer, cmsg.delivery_info, cmsg.properties, cmsg.payload)
       end
     end
     
-    def pop_one_from_buffer
-      # TODO: 可以采用 pop(true) 改为 non-blocking 但需要处理额外抛出的 ThreadErr
-      return if @buffer_queue.size <= 0
-      @buffer_queue.pop
+    # non-blocking pop message, if empty return nil. other error raise exception
+    def peak
+      @buffer_queue.pop(true)
+    rescue ThreadError => e
+      nil if e.to_s == "queue empty"
     end
   end
   

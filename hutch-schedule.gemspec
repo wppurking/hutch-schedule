@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'hutch', '~> 1.0'
   spec.add_runtime_dependency "multi_json"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.1"
+  spec.add_runtime_dependency "ratelimit", "~> 1.0"
   spec.add_runtime_dependency "activesupport", ">= 5.0"
   
   spec.add_development_dependency "activejob"

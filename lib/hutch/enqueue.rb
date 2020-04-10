@@ -6,6 +6,7 @@ module Hutch
   # If consumer need `enqueue`, just include this module
   module Enqueue
     extend ActiveSupport::Concern
+    include Hutch::Threshold
     
     # Add Consumer methods
     class_methods do
