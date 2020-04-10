@@ -33,6 +33,12 @@ module Hutch
         @core.connect!
       end
       
+      def disconnect
+        Hutch.disconnect if Hutch.connected?
+        @core = nil
+      end
+      
+      
       def core
         @core
       end

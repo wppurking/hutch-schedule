@@ -14,8 +14,7 @@ module Hutch
       # TODO: 将这个线程变量暴露出去
       @message_worker = Concurrent::FixedThreadPool.new(20)
       # TODO: 提取成为参数, 每 5s 执行一次任务
-      @timer_worker = Concurrent::TimerTask.new(execution_interval: 5) { retry_buffer_queue }
-      puts "worker............., #{@broker}"
+      @timer_worker = Concurrent::TimerTask.execute(execution_interval: 5) { retry_buffer_queue }
       @buffer_queue = ::Queue.new
     end
     
@@ -30,8 +29,13 @@ module Hutch
       queue.subscribe(consumer_tag: unique_consumer_tag, manual_ack: true) do |*args|
         delivery_info, properties, payload = Hutch::Adapter.decode_message(*args)
         # TODO: 队列本身的 block 只是提交任务给另外的 ThreadPool, 但需要暴露参数, 给到特制的 ThreadPool 拥有能力进行 ratelimit
-        handle_message(consumer, delivery_info, properties, payload)
+        handle_message_with_limits(consumer, delivery_info, properties, payload)
       end
+    end
+    
+    def handle_message_with_limits(consumer, delivery_info, properties, payload)
+      puts 'handle_message_with_limits.......'
+      handle_message(consumer, delivery_info, properties, payload)
     end
     
     def retry_buffer_queue

@@ -29,10 +29,9 @@ RSpec.describe Hutch::Schedule::Core do
     after(:each) do
       Hutch::Schedule::DELAY_QUEUES.each do |suffix|
         queue_name = Hutch::Schedule.delay_queue_name(suffix)
-        puts "Hutch.broker.channel: #{Hutch.broker.channel}"
         Hutch.broker.channel.queue_delete(queue_name)
       end
-      Hutch.disconnect
+      Hutch::Schedule.disconnect
     end
     
     it 'check delay queue is set' do
@@ -47,7 +46,6 @@ RSpec.describe Hutch::Schedule::Core do
     # 用于手动测试 woker
     it 'process', skip: false do
       Hutch::Schedule.connect
-      puts "Hutch.broker: #{Hutch.broker}"
       @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
       @worker.run
       LoadWork.enqueue(b: 1)
