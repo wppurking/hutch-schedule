@@ -36,10 +36,11 @@ module Hutch
         # redis: 传入设置的 redis
         # bucket_interval: 记录的间隔, 越小精度越大
         @rate_limiter = Ratelimit.new(self.name,
-                                      bucket_interval: 1,
+                                      bucket_interval: Hutch::Config.get(:ratelimit_bucket_interval),
                                       redis:           Redis.new(url: Hutch::Config.get(:ratelimit_redis_url))
         )
-        @mutex        = Mutex.new
+        # every Consumer Class have one Mutex lock
+        @mutex = Mutex.new
       end
       
       # 判断是否超期
