@@ -1,8 +1,23 @@
-# Hutch::Schedule
+# Hutch Schedule
 
 Add the schedule message function to [Hutch](https://github.com/gocardless/hutch).
 
 See [hutch-schedule-demo](https://github.com/wppurking/hutch-schedule-demo) how to integration with rails.
+
+## Contents
+
+- [Hutch Schedule](#hutch-schedule)
+  - [Contents](#contents)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Hutch::Enqueue](#hutchenqueue)
+  - [Hutch::Threshold](#hutchthreshold)
+  - [Error Retry](#error-retry)
+  - [Rails](#rails)
+    - [Work with Hutch it`s self](#work-with-hutch-its-self)
+    - [Work with ActiveJob](#work-with-activejob)
+  - [License](#license)
+  - [TODO](#todo)
 
 ## Installation
 
@@ -52,6 +67,41 @@ We design the fixed delay level from seconds to hours, below is the details:
 
 RabbitMQ is not fit for storage lot`s of delay message so if you want delay an message beyand 3 hours so you need to storage it
 into database or some place.
+
+### Hutch::Threshold
+Let consumer to include `Hutch::Threshold` to get the ability of threshold the message consume. It`s automatic included when 
+consumer include `Hutch::Enqueue`.
+
+1. static configuration
+```ruby
+class PlanConsumer
+  include Hutch::Consumer
+  include Hutch::Enqueue
+  
+  attempts 3
+  consume 'abc.plan'
+  # threshold 3 jobs per second
+  threshold rate: 3, interval: 1
+end
+```
+
+2. dynamic lambada
+```ruby
+class PlanConsumer
+  include Hutch::Consumer
+  include Hutch::Enqueue
+  
+  attempts 3
+  consume 'abc.plan'
+  # threshold 2 jobs every 2 second with get_report context
+  threshold -> { { context: 'get_report', rate: 2, interval: 2 } }
+end
+```
+
+threshold lambada need get return value must be a Hash and include:
+* context: the limit context with currency threshold
+* rate: the rate speed of threshold
+* interval: the time range of threshold
 
 ### Error Retry
 If you want use error retry, then:
