@@ -33,21 +33,25 @@ module Hutch
           @rate     = args[:rate]
           @interval = args[:interval]
         end
+        # call redis.ping let fail fast if redis is not avalible
+        _redis.ping
         # redis: 传入设置的 redis
         # bucket_interval: 记录的间隔, 越小精度越大
         @rate_limiter = Ratelimit.new(self.name,
                                       bucket_interval: Hutch::Config.get(:ratelimit_bucket_interval),
-                                      redis:           Redis.new(url: Hutch::Config.get(:ratelimit_redis_url))
-        )
+                                      redis:           _redis)
       end
       
-      # 判断是否超期
+      # is class level @rate_limiter _context exceeded?
+      # if class level @rate_limiter is nil alwayt return false
       def ratelimit_exceeded?
+        return false if @rate_limiter.blank?
         @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
       end
       
       # 增加一次调用
       def ratelimit_add
+        return if @rate_limiter.blank?
         @rate_limiter.add(_context)
       end
       
@@ -61,6 +65,11 @@ module Hutch
       
       def _interval
         @block_given ? @threshold_block.call[:interval] : @interval
+      end
+      
+      # all Consumers that use threshold module shared the same redis instance
+      def _redis
+        @@redis ||= Redis.new(url: Hutch::Config.get(:ratelimit_redis_url))
       end
     end
   end

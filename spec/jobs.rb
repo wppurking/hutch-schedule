@@ -1,3 +1,14 @@
+class NoThresholdWork
+  include Hutch::Consumer
+  include Hutch::Enqueue
+  
+  consume 'nothreshold'
+  
+  def process(message)
+    puts "NoThresholdWork: #{Time.now.to_f} message: #{message.body}"
+  end
+end
+
 class LoadWork
   include Hutch::Consumer
   include Hutch::Enqueue
