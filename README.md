@@ -79,7 +79,7 @@ RabbitMQ is not fit for storage lot`s of delay message so if you want delay an m
 into database or some place.
 
 ## Hutch::Threshold
-Let consumer to include `Hutch::Threshold` to get the ability of threshold the message consume. It`s automatic included when 
+Let consumer to include `Hutch::Threshold` to get the ability of threshold the message consume. It's automatic included when 
 consumer include `Hutch::Enqueue`.
 
 1. static configuration
