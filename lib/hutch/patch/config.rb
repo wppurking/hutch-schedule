@@ -4,6 +4,7 @@ module Hutch
     number_setting :worker_pool_size, 20
     
     # Hutch Schedule exceeded checker and poller interval seconds
+    # Hutch Worker Pool heartbeat interval (share interval config)
     number_setting :poller_interval, 1
     
     # Hutch Schedule poller batch size
