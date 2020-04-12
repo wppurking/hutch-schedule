@@ -1,6 +1,5 @@
 require "spec_helper"
 
-# 需要真正的 rabbitmq 启动
 RSpec.describe Hutch::Config do
   it '#worker_pool_size' do
     expect(subject.get(:worker_pool_size)).to eq(20)
