@@ -22,6 +22,7 @@ module Hutch
       @batch_size     = Hutch::Config.get(:poller_batch_size)
     end
     
+    # 停止两个线程池
     def shutdown
       @message_worker.shutdown
       @timer_worker.shutdown
@@ -79,6 +80,7 @@ module Hutch
     end
   end
   
+  # Consumer Message wrap rabbitmq message infomation
   class ConsumerMsg
     attr_reader :consumer, :delivery_info, :properties, :payload
     
