@@ -54,7 +54,7 @@ They will do something below:
 ## Configurations
 
 Name | Default Value | Description
------------------------------------
+-----|---------------|-------------
 worker_pool_size | 20 | Monkey patch the `Hutch::Worker` set the FixedThreadPool thread size(not the bunney ConsumerWorkPool size) 
 poller_interval| 1 | seconds of the poller to trigger, poller the message in BufferQueue submit to FixedThreadPool
 poller_batch_size | 100 | the message size of every batch triggerd by the poller
