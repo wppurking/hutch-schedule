@@ -16,10 +16,12 @@ module Hutch
       
       @message_worker = Concurrent::FixedThreadPool.new(Hutch::Config.get(:worker_pool_size))
       @timer_worker   = Concurrent::TimerTask.execute(execution_interval: Hutch::Config.get(:poller_interval)) do
+        heartbeat_connection
         retry_buffer_queue
       end
       @buffer_queue   = ::Queue.new
       @batch_size     = Hutch::Config.get(:poller_batch_size)
+      @connected      = Hutch.connected?
     end
     
     # 停止两个线程池
@@ -43,24 +45,24 @@ module Hutch
     end
     
     def handle_message_with_limits(consumer, delivery_info, properties, payload)
-      # if Hutch disconnect skip
-      return unless Hutch.connected?
-      
-      # Hutch.logger.info('handle_message_with_limits')
       # 1. consumer.limit?
       # 2. yes: make and ConsumerMsg to queue
       # 3. no: post handle
       @message_worker.post do
-        # if Hutch disconnect skip do work
-        
         if consumer.ratelimit_exceeded?
           @buffer_queue.push(ConsumerMsg.new(consumer, delivery_info, properties, payload))
         else
-          return unless Hutch.connected?
+          # if Hutch disconnect skip do work let message timeout in rabbitmq waiting message push again
+          return unless @connected
           consumer.ratelimit_add
           handle_message(consumer, delivery_info, properties, payload)
         end
       end
+    end
+    
+    # 心跳检查 Hutch 的连接
+    def heartbeat_connection
+      @connected = Hutch.connected?
     end
     
     # 每隔一段时间, 从 buffer queue 中转移任务到执行
