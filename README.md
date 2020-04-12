@@ -51,7 +51,17 @@ They will do something below:
   - Set `x-message-ttl: <30.days>`: to avoid the queue is to large, because there is no consumer with this queue.
 3. If ActiveJob is loaded. it will use `ActiveJob::Base.descendants` to register all ActiveJob class to one-job-per-consumer to Hutch::Consumer 
 
-### Hutch::Enqueue
+## Configurations
+
+Name | Default Value | Description
+-----------------------------------
+worker_pool_size | 20 | Monkey patch the `Hutch::Worker` set the FixedThreadPool thread size(not the bunney ConsumerWorkPool size) 
+poller_interval| 1 | seconds of the poller to trigger, poller the message in BufferQueue submit to FixedThreadPool
+poller_batch_size | 100 | the message size of every batch triggerd by the poller
+ratelimit_redis_url | redis://127.0.0.1:6379/0 | Ratelimit need use redis, the Redis url
+ratelimit_bucket_interval | 1 | Ratelimit use the time bucket (seconds) to store the counts, lower the more accurate
+
+## Hutch::Enqueue
 Let consumer to include `Hutch::Enqueue` then it has the ability of publishing message to RabbitMQ with the `consume '<routing_key>'`
 
 * enqueue: just publish one message
@@ -68,7 +78,7 @@ We design the fixed delay level from seconds to hours, below is the details:
 RabbitMQ is not fit for storage lot`s of delay message so if you want delay an message beyand 3 hours so you need to storage it
 into database or some place.
 
-### Hutch::Threshold
+## Hutch::Threshold
 Let consumer to include `Hutch::Threshold` to get the ability of threshold the message consume. It`s automatic included when 
 consumer include `Hutch::Enqueue`.
 
@@ -103,7 +113,7 @@ threshold lambada need get return value must be a Hash and include:
 * rate: the rate speed of threshold
 * interval: the time range of threshold
 
-### Error Retry
+## Error Retry
 If you want use error retry, then:
 
 1. Add `Hutch::ErrorHandlers::MaxRetry` to `Hutch::Config.error_handlers` like below
