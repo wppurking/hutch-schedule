@@ -39,15 +39,11 @@ module Hutch
                                       bucket_interval: Hutch::Config.get(:ratelimit_bucket_interval),
                                       redis:           Redis.new(url: Hutch::Config.get(:ratelimit_redis_url))
         )
-        # every Consumer Class have one Mutex lock
-        @mutex = Mutex.new
       end
       
       # 判断是否超期
       def ratelimit_exceeded?
-        @mutex.synchronize do
-          @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
-        end
+        @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
       end
       
       # 增加一次调用
