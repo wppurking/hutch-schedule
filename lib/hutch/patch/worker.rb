@@ -19,19 +19,21 @@ module Hutch
         heartbeat_connection
         retry_buffer_queue
       end
-      # TODO: 需要考虑这个 buffer_queue 的数量与 channel[prefetch] 的数量对比问题, 如果 buffer_queue.size > prefetch 那么 RabbitMQ 就不会再 push 新的 message 给到当前的 Hutch 实例
-      # * 考虑每一次轮训, buffer 超过 prefetch (per consumer), 则全部 broker.requeue 回 RabbitMQ. (需要针对 Queue 进行同步处理)
-      # * 不处理, 任由其依据 prefetch 进行阻塞. (会影响其他任务的消耗)
-      # * 扩大 prefetch 的量. (会影响多进程的消耗速度)
+      
+      # The queue size maybe the same as channel[prefetch] and every Consumer have it's own buffer queue with the same prefetch size,
+      # when the buffer queue have the prefetch size message rabbitmq will stop push message to this consumer but it's ok.
+      # The consumer will threshold by the shared redis instace.
       @buffer_queue = ::Queue.new
       @batch_size   = Hutch::Config.get(:poller_batch_size)
       @connected    = Hutch.connected?
     end
     
-    # 停止两个线程池
-    def shutdown
-      @message_worker.shutdown
+    # Stop a running worker by killing all subscriber threads.
+    # Stop two thread pool
+    def stop
       @timer_worker.shutdown
+      @message_worker.shutdown
+      @broker.stop
     end
     
     # Bind a consumer's routing keys to its queue, and set up a subscription to
