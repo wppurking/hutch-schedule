@@ -40,10 +40,27 @@ module Hutch
         @core = nil
       end
       
-      
       def core
         @core
       end
+      
+      # redis with namespace
+      def ns
+        @redis ||= Redis::Namespace.new(:hutch, redis: Redis.new(
+          url: Hutch::Config.get(:redis_url),
+          # https://github.com/redis/redis-rb#reconnections
+          # retry 10 times total cost 10 * 30 = 300s
+          reconnect_attempts:  Hutch::Config.get(:ratelimit_redis_reconnect_attempts),
+          :reconnect_delay     => 3,
+          :reconnect_delay_max => 30.0,
+        ))
+      end
+      
+      # all Consumers that use threshold module shared the same redis instance
+      def redis
+        ns.redis
+      end
+      
       
       def publish(*args)
         core.publish(*args)

@@ -1,4 +1,5 @@
 require 'active_support/concern'
+require 'hutch/schedule'
 require 'ratelimit'
 
 module Hutch
@@ -34,12 +35,12 @@ module Hutch
           @interval = args[:interval]
         end
         # call redis.ping let fail fast if redis is not avalible
-        _redis.ping
+        Hutch::Schedule.redis.ping
         # redis: 传入设置的 redis
         # bucket_interval: 记录的间隔, 越小精度越大
         @rate_limiter = Ratelimit.new(self.name,
                                       bucket_interval: Hutch::Config.get(:ratelimit_bucket_interval),
-                                      redis:           _redis)
+                                      redis:           Hutch::Schedule.redis)
       end
       
       # is class level @rate_limiter _context exceeded?
@@ -70,18 +71,6 @@ module Hutch
       
       def _interval
         @block_given ? @threshold_block.call[:interval] : @interval
-      end
-      
-      # all Consumers that use threshold module shared the same redis instance
-      def _redis
-        @@redis ||= Redis.new(
-          url: Hutch::Config.get(:redis_url),
-          # https://github.com/redis/redis-rb#reconnections
-          # retry 10 times total cost 10 * 30 = 300s
-          reconnect_attempts:  Hutch::Config.get(:ratelimit_redis_reconnect_attempts),
-          :reconnect_delay     => 3,
-          :reconnect_delay_max => 30.0,
-        )
       end
     end
   end
