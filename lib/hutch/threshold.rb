@@ -46,15 +46,18 @@ module Hutch
       # if class level @rate_limiter is nil alwayt return false
       def ratelimit_exceeded?
         return false if @rate_limiter.blank?
-        # TODO: 针对 redis 的连接断开, 需要进行移除保护处理, 避免 redis 连接断开整个进程失效
         @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
+      rescue Redis::BaseError
+        # when redis cann't connect return exceeded limit
+        true
       end
       
       # 增加一次调用
       def ratelimit_add
         return if @rate_limiter.blank?
-        # TODO: 针对 redis 的连接断开, 需要进行移除保护处理, 避免 redis 连接断开整个进程失效
         @rate_limiter.add(_context)
+      rescue Redis::BaseError
+        nil
       end
       
       def _context
@@ -71,7 +74,14 @@ module Hutch
       
       # all Consumers that use threshold module shared the same redis instance
       def _redis
-        @@redis ||= Redis.new(url: Hutch::Config.get(:ratelimit_redis_url))
+        @@redis ||= Redis.new(
+          url: Hutch::Config.get(:ratelimit_redis_url),
+          # https://github.com/redis/redis-rb#reconnections
+          # retry 10 times total cost 10 * 30 = 300s
+          reconnect_attempts:  Hutch::Config.get(:ratelimit_redis_reconnect_attempts),
+          :reconnect_delay     => 3,
+          :reconnect_delay_max => 30.0,
+        )
       end
     end
   end
