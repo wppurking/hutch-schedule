@@ -16,6 +16,12 @@ module Hutch
         Hutch.publish(enqueue_routing_key, message)
       end
       
+      # enqueue unique message
+      def enqueue_uniq(uniq_key, message)
+        return false unless uniq_key_check(uniq_key)
+        enqueue(message)
+      end
+      
       # publish message at a delay times
       # interval: delay interval seconds
       # message: publish message
@@ -34,6 +40,11 @@ module Hutch
         Hutch::Schedule.publish(delay_routing_key, message, properties)
       end
       
+      def enqueue_uniq_in(uniq_key, interval, message, props = {})
+        return false unless uniq_key_check(uniq_key)
+        enqueue_in(interval, message, props)
+      end
+      
       # delay at exatly time point
       def enqueue_at(time, message, props = {})
         # compatible with with ActiveJob API
@@ -41,6 +52,17 @@ module Hutch
         # if time is early then now then just delay 1 second
         interval = [(time_or_timestamp - Time.now.utc.to_f), 1.second].max
         enqueue_in(interval, message, props)
+      end
+      
+      def enqueue_uniq_at(uniq_key, time, message, props = {})
+        return false unless uniq_key_check(uniq_key)
+        enqueue_at(time, message, props)
+      end
+      
+      # check uniq_key is set or not
+      # expire time set for 24h
+      def uniq_key_check(uniq_key)
+        Hutch::Schedule.ns.set(uniq_key, "1", ex: 86400, nx: true)
       end
       
       # routing_key: the purpose is to send message to hutch exchange and then routing to the correct queue,
