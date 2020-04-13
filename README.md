@@ -188,4 +188,3 @@ Use the repo: https://github.com/wppurking/hutch-schedule-demo
 
 # TODO
 * add cron job support
-* add unique job support
