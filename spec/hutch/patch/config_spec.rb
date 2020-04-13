@@ -17,9 +17,9 @@ RSpec.describe Hutch::Config do
   end
   
   it '#ratelimit_redis_url' do
-    expect(subject.get(:ratelimit_redis_url)).to eq("redis://127.0.0.1:6379/0")
-    expect(subject.is_bool(:ratelimit_redis_url)).to be_falsey
-    expect(subject.is_num(:ratelimit_redis_url)).to be_falsey
+    expect(subject.get(:redis_url)).to eq("redis://127.0.0.1:6379/0")
+    expect(subject.is_bool(:redis_url)).to be_falsey
+    expect(subject.is_num(:redis_url)).to be_falsey
   end
   
   it '#ratelimit_bucket_interval' do

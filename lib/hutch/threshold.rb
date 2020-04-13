@@ -75,7 +75,7 @@ module Hutch
       # all Consumers that use threshold module shared the same redis instance
       def _redis
         @@redis ||= Redis.new(
-          url: Hutch::Config.get(:ratelimit_redis_url),
+          url: Hutch::Config.get(:redis_url),
           # https://github.com/redis/redis-rb#reconnections
           # retry 10 times total cost 10 * 30 = 300s
           reconnect_attempts:  Hutch::Config.get(:ratelimit_redis_reconnect_attempts),

@@ -58,7 +58,7 @@ Name | Default Value | Description
 worker_pool_size | 20 | Monkey patch the `Hutch::Worker` set the FixedThreadPool thread size(not the bunney ConsumerWorkPool size) 
 poller_interval| 1 | seconds of the poller to trigger, poller the message in BufferQueue submit to FixedThreadPool
 poller_batch_size | 100 | the message size of every batch triggerd by the poller
-ratelimit_redis_url | redis://127.0.0.1:6379/0 | Ratelimit need use redis, the Redis url
+redis_url | redis://127.0.0.1:6379/0 | Redis backend url for Ratelimit and Unique Job 
 ratelimit_bucket_interval | 1 | Ratelimit use the time bucket (seconds) to store the counts, lower the more accurate
 
 ## Hutch::Enqueue
