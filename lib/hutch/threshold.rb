@@ -46,12 +46,14 @@ module Hutch
       # if class level @rate_limiter is nil alwayt return false
       def ratelimit_exceeded?
         return false if @rate_limiter.blank?
+        # TODO: 针对 redis 的连接断开, 需要进行移除保护处理, 避免 redis 连接断开整个进程失效
         @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
       end
       
       # 增加一次调用
       def ratelimit_add
         return if @rate_limiter.blank?
+        # TODO: 针对 redis 的连接断开, 需要进行移除保护处理, 避免 redis 连接断开整个进程失效
         @rate_limiter.add(_context)
       end
       
