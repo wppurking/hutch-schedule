@@ -26,7 +26,9 @@ module Hutch
       # @see Redis::Client
       redis_url:                          "redis://127.0.0.1:6379/0",
       ratelimit_bucket_interval:          1,
-      ratelimit_redis_reconnect_attempts: 10
+      ratelimit_redis_reconnect_attempts: 10,
+      # need an positive channel_prefetch
+      channel_prefetch:                   20
     )
     define_methods
   end
