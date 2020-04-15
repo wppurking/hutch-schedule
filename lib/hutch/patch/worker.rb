@@ -10,13 +10,16 @@ module Hutch
   # 明确告知 RabbitMQ 此任务完成.
   class Worker
     def initialize(broker, consumers, setup_procs)
+      raise "use Hutch::Schedule must set an positive channel_prefetch" if Hutch::Config.get(:channel_prefetch) < 1
       @broker          = broker
       self.consumers   = consumers
       self.setup_procs = setup_procs
       
       @message_worker = Concurrent::FixedThreadPool.new(Hutch::Config.get(:worker_pool_size))
       @timer_worker   = Concurrent::TimerTask.execute(execution_interval: Hutch::Config.get(:poller_interval)) do
+        # all chekcer in the same thread
         heartbeat_connection
+        flush_to_retry
         retry_buffer_queue
       end
       
@@ -25,9 +28,10 @@ module Hutch
       # message to this consumer.
       # Because the buffer queue is shared by all consumers so the max queue size is [prefetch * consumer count],
       # if prefetch is 20 and have 30 consumer the max queue size is  20 * 30 = 600.
-      @buffer_queue = ::Queue.new
-      @batch_size   = Hutch::Config.get(:poller_batch_size)
-      @connected    = Hutch.connected?
+      @buffer_queue    = ::Queue.new
+      @batch_size      = Hutch::Config.get(:poller_batch_size)
+      @connected       = Hutch.connected?
+      @last_flush_time = Time.now.utc
     end
     
     # Stop a running worker by killing all subscriber threads.
@@ -55,13 +59,7 @@ module Hutch
     # cmsg: ConsumerMsg
     def handle_cmsg_with_limits(cmsg)
       return if cmsg.blank?
-      # 1. consumer.limit?
-      # TODO: 考虑不是 buffer 机制, 而是直接借用现在的 delay 让消息重新进队列
-      # TODO: 因为 prefetch 是 queue 级别, 但 queue 中是的任务存在根据 key 动态计算不同的 limit, 所以会出现
-      # TODO: 在 limit 差距大之后出现 buffer 内的任务的积压, 需要借用 publish dealy 来解决会让 cpu 空转的问题
-      # TODO: 5s 内的任务可以直接在 buffer 中处理掉, 延期大于 5s 的考虑成为 delay message
-      # 2. yes: make and ConsumerMsg to queue
-      # 3. no: post handle
+      # 正常的任务处理 ratelimit 的处理逻辑, 如果有限制那么就进入 buffer 缓冲
       consumer = cmsg.consumer
       @message_worker.post do
         if consumer.ratelimit_exceeded?(cmsg.message)
@@ -109,10 +107,33 @@ module Hutch
       @connected = Hutch.connected?
     end
     
-    # 每隔一段时间, 从 buffer queue 中转移任务到执行
+    # 每隔一段时间, 从 buffer queue 中转移任务到执行, interval 比较短的会立即执行掉
     def retry_buffer_queue
       @batch_size.times do
-        handle_cmsg_with_limits(peak)
+        cmsg = peak
+        return if cmsg.blank?
+        handle_cmsg_with_limits(cmsg)
+      end
+    end
+    
+    # 对于 rate 间隔比较长的, 不适合一直存储在 buffer 中, 所以需要根据 interval 的值将长周期的 message 重新入队给 RabbitMQ 让其进行
+    # 等待, 但同时不可以让其直接 Requeue, 这样会导致频繁的与 RabbitMQ 来往交换. 需要让消息根据周期以及执行次数逐步拉长等待, 直到最终最长
+    # 时间的等待.
+    #
+    # 有下面几个要求:
+    #  - 在 retry_buffer_queue 之前调用
+    #  - 整个方法调用时间长度需要在 1s 之内
+    def flush_to_retry
+      now = Time.now.utc
+      # 现在为每 10s flush 一次
+      if now - @last_flush_time >= 5
+        @buffer_queue.size.times do
+          cmsg = peak
+          break if cmsg.blank?
+          # 如果没有被处理, 重新放回 buffer
+          @buffer_queue.push(cmsg) unless cmsg.enqueue_in_or_not
+        end
+        @last_flush_time = now
       end
     end
     
@@ -128,6 +149,10 @@ module Hutch
   class ConsumerMsg
     attr_reader :consumer, :message
     
+    def logger
+      Hutch::Logging.logger
+    end
+    
     def initialize(consumer, message)
       @consumer = consumer
       @message  = message
@@ -135,6 +160,20 @@ module Hutch
     
     def handle_cmsg_args
       [consumer, message.delivery_info, message.properties, message.payload, message]
+    end
+    
+    # if delays > 10s then let the message to rabbitmq to delay and enqueue again instead of rabbitmq reqneue
+    def enqueue_in_or_not
+      interval = consumer.interval(message)
+      # interval 小于 5s, 的则不会传, 在自己的 buffer 中等待
+      return false if interval < 5
+      # 等待时间过长的消息, 交给远端的 rabbitmq 去进行等待, 不占用 buffer 空间
+      # TODO: 如果数据量特别大, 但 ratelimit 特别严格, 那么也会变为固定周期的积压, 需要增加对执行次数的记录以及延长
+      # TODO: 市场 30s 执行一次的任务, 积累了 200 个, 那么这个积压会越来越多, 直到保持到一个 RabbitMQ 与 hutch 之间的最长等待周期, 会一直空转
+      #  - 要么增加对执行次数的考虑, 拉长延长. 但最终会有一个最长的延长 10800 (3h), 这个问题最终仍然会存在
+      #  - 设置延长多长之后, 就舍弃这个任务, 因为由于 ratelimit 的存在, 但又持续的积压, 不可能处理完这个任务
+      Hutch.broker.ack(message.delivery_info.delivery_tag)
+      consumer.enqueue_in(interval, message.body, message.properties.to_hash)
     end
   end
 end

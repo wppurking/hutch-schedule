@@ -48,11 +48,12 @@ RSpec.describe Hutch::Schedule::Core do
       @worker.run
     end
     
-    it 'handle mesage', skip: false do
-      Hutch::Schedule.connect
+    it 'handle mesage', skip: true do
+      Hutch::Config.channel_prefetch = 20
       Hutch::Config.setup_procs << -> {
-        LoadWork2.enqueue(b: 1)
+        1000.times { LoadWork2.enqueue(b: rand(5)) }
       }
+      Hutch::Schedule.connect
       @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
       @worker.run
     end

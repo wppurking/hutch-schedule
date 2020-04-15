@@ -78,6 +78,10 @@ module Hutch
         end
       end
       
+      def interval(message)
+        _interval(threshold_args(message))
+      end
+      
       def _context(args)
         args.fetch(:context, default_context)
       end
