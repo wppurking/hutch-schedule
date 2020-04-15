@@ -28,5 +28,6 @@ module Hutch
       ratelimit_bucket_interval:          1,
       ratelimit_redis_reconnect_attempts: 10
     )
+    define_methods
   end
 end
