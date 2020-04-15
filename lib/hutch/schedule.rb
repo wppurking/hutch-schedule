@@ -30,7 +30,9 @@ module Hutch
         ActiveJob::QueueAdapters::HutchAdapter.register_actice_job_classes if defined?(ActiveJob::QueueAdapters::HutchAdapter)
         
         return if core.present?
-        Hutch.connect unless Hutch.connected?
+        # initialize config from the patch
+        Hutch::Config.initialize
+        Hutch.connect
         @core = Hutch::Schedule::Core.new(Hutch.broker)
         @core.connect!
       end
