@@ -20,9 +20,11 @@ module Hutch
         retry_buffer_queue
       end
       
-      # The queue size maybe the same as channel[prefetch] and every Consumer have it's own buffer queue with the same prefetch size,
-      # when the buffer queue have the prefetch size message rabbitmq will stop push message to this consumer but it's ok.
-      # The consumer will threshold by the shared redis instace.
+      # The queue size maybe the same as channel[prefetch] and every Consumer shared one buffer queue with the
+      # same prefetch size, when current consumer have unack messages reach the prefetch size rabbitmq will stop push
+      # message to this consumer.
+      # Because the buffer queue is shared by all consumers so the max queue size is [prefetch * consumer count],
+      # if prefetch is 20 and have 30 consumer the max queue size is  20 * 30 = 600.
       @buffer_queue = ::Queue.new
       @batch_size   = Hutch::Config.get(:poller_batch_size)
       @connected    = Hutch.connected?
@@ -50,7 +52,9 @@ module Hutch
       end
     end
     
-    def handle_message_with_limits(consumer, delivery_info, properties, payload)
+    # cmsg: ConsumerMsg
+    def handle_cmsg_with_limits(cmsg)
+      return if cmsg.blank?
       # 1. consumer.limit?
       # TODO: 考虑不是 buffer 机制, 而是直接借用现在的 delay 让消息重新进队列
       # TODO: 因为 prefetch 是 queue 级别, 但 queue 中是的任务存在根据 key 动态计算不同的 limit, 所以会出现
@@ -58,21 +62,26 @@ module Hutch
       # TODO: 5s 内的任务可以直接在 buffer 中处理掉, 延期大于 5s 的考虑成为 delay message
       # 2. yes: make and ConsumerMsg to queue
       # 3. no: post handle
-      message = args_to_message(consumer, delivery_info, properties, payload)
+      consumer = cmsg.consumer
       @message_worker.post do
-        if consumer.ratelimit_exceeded?(message)
-          @buffer_queue.push(message)
+        if consumer.ratelimit_exceeded?(cmsg.message)
+          @buffer_queue.push(cmsg)
         else
           # if Hutch disconnect skip do work let message timeout in rabbitmq waiting message push again
           return unless @connected
-          consumer.ratelimit_add(message)
-          handle_hutch_message(consumer, message)
+          consumer.ratelimit_add(cmsg.message)
+          handle_cmsg(*cmsg.handle_cmsg_args)
         end
       end
+    
+    end
+    
+    def handle_message_with_limits(consumer, delivery_info, properties, payload)
+      handle_cmsg_with_limits(consumer_msg(consumer, delivery_info, properties, payload))
     end
     
     # change args to message reuse the code from #handle_message
-    def args_to_message(consumer, delivery_info, properties, payload)
+    def consumer_msg(consumer, delivery_info, properties, payload)
       serializer = consumer.get_serializer || Hutch::Config[:serializer]
       logger.debug {
         spec = serializer.binary? ? "#{payload.bytesize} bytes" : "#{payload}"
@@ -82,11 +91,11 @@ module Hutch
           "payload: #{spec}"
       }
       
-      Hutch::Message.new(delivery_info, properties, payload, serializer)
+      ConsumerMsg.new(consumer, Hutch::Message.new(delivery_info, properties, payload, serializer))
     end
     
-    def handle_hutch_message(consumer, message)
-      consumer_instance = consumer.new.tap { |c| c.broker, c.delivery_info = @broker, message.delivery_info }
+    def handle_cmsg(consumer, delivery_info, properties, payload, message)
+      consumer_instance = consumer.new.tap { |c| c.broker, c.delivery_info = @broker, delivery_info }
       with_tracing(consumer_instance).handle(message)
       @broker.ack(delivery_info.delivery_tag)
     rescue => ex
@@ -103,9 +112,7 @@ module Hutch
     # 每隔一段时间, 从 buffer queue 中转移任务到执行
     def retry_buffer_queue
       @batch_size.times do
-        cmsg = peak
-        return if cmsg.blank?
-        handle_message_with_limits(cmsg.consumer, cmsg.delivery_info, cmsg.properties, cmsg.payload)
+        handle_cmsg_with_limits(peak)
       end
     end
     
@@ -117,15 +124,17 @@ module Hutch
     end
   end
   
-  # Consumer Message wrap rabbitmq message infomation
+  # Consumer Message wrap Hutch::Message and Consumer
   class ConsumerMsg
-    attr_reader :consumer, :delivery_info, :properties, :payload
+    attr_reader :consumer, :message
     
-    def initialize(consumer, delivery_info, properties, payload)
-      @consumer      = consumer
-      @delivery_info = delivery_info
-      @properties    = properties
-      @payload       = payload
+    def initialize(consumer, message)
+      @consumer = consumer
+      @message  = message
+    end
+    
+    def handle_cmsg_args
+      [consumer, message.delivery_info, message.properties, message.payload, message]
     end
   end
 end
