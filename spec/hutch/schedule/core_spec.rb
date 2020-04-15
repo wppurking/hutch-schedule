@@ -20,6 +20,9 @@ RSpec.describe Hutch::Schedule::Core do
         queue_name = Hutch::Schedule.delay_queue_name(suffix)
         Hutch.broker.channel.queue_delete(queue_name)
       end
+      Hutch.consumers.each do |consumer|
+        Hutch.broker.channel.queue_delete(consumer.get_queue_name)
+      end
       Hutch::Schedule.disconnect
     end
     
