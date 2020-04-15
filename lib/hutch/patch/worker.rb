@@ -58,7 +58,6 @@ module Hutch
     
     # cmsg: ConsumerMsg
     def handle_cmsg_with_limits(cmsg)
-      return if cmsg.blank?
       # 正常的任务处理 ratelimit 的处理逻辑, 如果有限制那么就进入 buffer 缓冲
       consumer = cmsg.consumer
       @message_worker.post do
@@ -109,11 +108,20 @@ module Hutch
     
     # 每隔一段时间, 从 buffer queue 中转移任务到执行, interval 比较短的会立即执行掉
     def retry_buffer_queue
+      begin_size = @buffer_queue.size
+      now        = Time.now.utc
+      stat       = {}
       @batch_size.times do
         cmsg = peak
-        return if cmsg.blank?
+        break if cmsg.blank?
+        if stat.key?(cmsg.message.body[:b])
+          stat[cmsg.message.body[:b]] += 1
+        else
+          stat[cmsg.message.body[:b]] = 1
+        end
         handle_cmsg_with_limits(cmsg)
       end
+      logger.info "retry_buffer_queue #{Time.now.utc - now}, size from #{begin_size} to #{@buffer_queue.size}, stat: #{stat}"
     end
     
     # 对于 rate 间隔比较长的, 不适合一直存储在 buffer 中, 所以需要根据 interval 的值将长周期的 message 重新入队给 RabbitMQ 让其进行
@@ -125,7 +133,7 @@ module Hutch
     #  - 整个方法调用时间长度需要在 1s 之内
     def flush_to_retry
       now = Time.now.utc
-      # 现在为每 10s flush 一次
+      # TODO: 间隔检查时间可以考虑与 consumers 大小, prefetch 大小有关
       if now - @last_flush_time >= 5
         @buffer_queue.size.times do
           cmsg = peak
@@ -134,6 +142,7 @@ module Hutch
           @buffer_queue.push(cmsg) unless cmsg.enqueue_in_or_not
         end
         @last_flush_time = now
+        logger.info "flush_to_retry #{Time.now.utc - now}"
       end
     end
     
@@ -162,9 +171,33 @@ module Hutch
       [consumer, message.delivery_info, message.properties, message.payload, message]
     end
     
+    def interval
+      @interval ||= consumer.interval(message)
+    end
+    
+    # 来自 max retry 中解析 x-death 的方法, 可以找到复用的方法
+    def failure_count(headers, consumer)
+      if headers.nil? || headers['x-death'].nil?
+        0
+      else
+        x_death_array = headers['x-death'].select do |x_death|
+          # http://ruby-doc.org/stdlib-2.2.3/libdoc/set/rdoc/Set.html#method-i-intersect-3F
+          (x_death['routing-keys'].presence || []).to_set.intersect?(consumer.routing_keys)
+        end
+        
+        if x_death_array.count > 0 && x_death_array.first['count']
+          # Newer versions of RabbitMQ return headers with a count key
+          x_death_array.inject(0) { |sum, x_death| sum + x_death['count'] }
+        else
+          # Older versions return a separate x-death header for each failure
+          x_death_array.count
+        end
+      end
+    end
+    
+    
     # if delays > 10s then let the message to rabbitmq to delay and enqueue again instead of rabbitmq reqneue
     def enqueue_in_or_not
-      interval = consumer.interval(message)
       # interval 小于 5s, 的则不会传, 在自己的 buffer 中等待
       return false if interval < 5
       # 等待时间过长的消息, 交给远端的 rabbitmq 去进行等待, 不占用 buffer 空间
@@ -173,7 +206,9 @@ module Hutch
       #  - 要么增加对执行次数的考虑, 拉长延长. 但最终会有一个最长的延长 10800 (3h), 这个问题最终仍然会存在
       #  - 设置延长多长之后, 就舍弃这个任务, 因为由于 ratelimit 的存在, 但又持续的积压, 不可能处理完这个任务
       Hutch.broker.ack(message.delivery_info.delivery_tag)
-      consumer.enqueue_in(interval, message.body, message.properties.to_hash)
+      prop_headers = message.properties[:headers] || {}
+      delays       = interval * [failure_count(prop_headers, consumer), 1].max
+      consumer.enqueue_in(delays, message.body, message.properties.to_hash)
     end
   end
 end

@@ -29,14 +29,19 @@ class LoadWork2
   threshold ->(msg) { CONTEXTS[msg[:b]] }
   
   CONTEXTS = [
-    { context: 'get_report0', rate: 1, interval: 30 },
-    { context: 'get_report1', rate: 1, interval: 2 },
-    { context: 'get_report2', rate: 1, interval: 1 },
-    { context: 'get_report3', rate: 3, interval: 1 },
-    { context: 'get_report4', rate: 1, interval: 1800 }
+    # { context: 'get_report0', rate: 1, interval: 1 },
+    # { context: 'get_report1', rate: 1, interval: 1 },
+    # { context: 'get_report2', rate: 1, interval: 1 },
+    # { context: 'get_report3', rate: 1, interval: 1 },
+    # { context: 'get_report4', rate: 1, interval: 1 },
+    # { context: 'get_report5', rate: 1, interval: 1 },
+    # { context: 'get_report6', rate: 5, interval: 1 },
+    # { context: 'get_report7', rate: 10, interval: 1 },
+    { context: 'get_report8', rate: 10, interval: 1 },
+    { context: 'get_report9', rate: 1, interval: 30 }
   ]
   
   def process(message)
-    # puts "#{Thread.current.name} - LoadWork2: #{Time.now.to_f} message: #{message.body}"
+    puts "#{Thread.current.name} - LoadWork2: #{Time.now.to_f} message: #{message.body}"
   end
 end
