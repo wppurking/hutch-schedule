@@ -1,5 +1,6 @@
 require 'active_support/concern'
 require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/module/attribute_accessors'
 require 'hutch/schedule'
 require 'ratelimit'
 
