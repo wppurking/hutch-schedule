@@ -11,7 +11,9 @@ module Hutch
     
     # Add Consumer methods
     class_methods do
+      
       # Publish the message to this consumer with one routing_key
+      # TODO: 需要约束传入的消息格式: 底层使用了 Hutch 的 serializer 需要处理
       def enqueue(message)
         Hutch.publish(enqueue_routing_key, message)
       end
