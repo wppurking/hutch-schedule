@@ -16,6 +16,8 @@ See [hutch-schedule-demo](https://github.com/wppurking/hutch-schedule-demo) how 
   - [Rails](#rails)
     - [Work with Hutch it`s self](#work-with-hutch-its-self)
     - [Work with ActiveJob](#work-with-activejob)
+  - [Limits](#limits)
+  - [Contributing](#contributing)
   - [License](#license)
   - [TODO](#todo)
 
@@ -156,6 +158,12 @@ PlanConsumer.enqueue_in(5.seconds, a: 1)
 ```
 
 ### Work with ActiveJob
+Config rails to use `:hutch` active_job adapter:
+```
+    config.active_job.queue_adapter     = :hutch
+    config.active_job.queue_name_prefix = 'ajd'
+```
+
 ```ruby
 class EmailJob < ApplicationJob
   queue_as :email
@@ -173,6 +181,13 @@ EmailJob.perform_later(user.id)
 # or
 EmailJob.set(wait: 5.seconds).perform_later(user.id)
 ```
+
+## Limits
+Because we use monkey patch to add some new features so if you direct use hutch cli and don't have some place to require
+hutch-schedule gem it won't be function.
+
+* When direct use hutch cli only have one hook for rails app to load external depencency so if the app is not an rails app right now will not working.
+* Hutch Config files must load during rails app initlization because monkey patch `Hutch::Config` need to load and then to work
 
 ## Contributing
 
