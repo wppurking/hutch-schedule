@@ -31,6 +31,4 @@ class LoadWork2
   def process(message)
     puts "LoadWork2: #{Time.now.to_f} message: #{message.body}"
   end
-
 end
-

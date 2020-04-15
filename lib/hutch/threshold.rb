@@ -1,4 +1,5 @@
 require 'active_support/concern'
+require 'active_support/core_ext/object/blank'
 require 'hutch/schedule'
 require 'ratelimit'
 
@@ -9,6 +10,10 @@ module Hutch
     
     # Add Consumer methods
     class_methods do
+      mattr_accessor :default_context, default: "default"
+      mattr_accessor :default_rate, default: 10
+      mattr_accessor :default_interval, default: 1
+      
       # 限流速度:
       #  context: 可选的上下文, 默认为 default
       #  rate: 数量
@@ -30,9 +35,9 @@ module Hutch
           raise "need args or block" if args.blank?
           raise "args need hash type" if args.class != Hash
           args.symbolize_keys!
-          @context  = args[:context].presence || "default"
-          @rate     = args[:rate]
-          @interval = args[:interval]
+          @context  = args[:context].presence || default_context
+          @rate     = args[:rate].presence || default_rate
+          @interval = args[:interval].presence || default_interval
         end
         # call redis.ping let fail fast if redis is not avalible
         Hutch::Schedule.redis.ping
@@ -62,15 +67,15 @@ module Hutch
       end
       
       def _context
-        @block_given ? @threshold_block.call[:context] : @context
+        @block_given ? @threshold_block.call[:context].presence || default_context : @context
       end
       
       def _rate
-        @block_given ? @threshold_block.call[:rate] : @rate
+        @block_given ? @threshold_block.call[:rate].presence || default_rate : @rate
       end
       
       def _interval
-        @block_given ? @threshold_block.call[:interval] : @interval
+        @block_given ? @threshold_block.call[:interval].presence || default_interval : @interval
       end
     end
   end
