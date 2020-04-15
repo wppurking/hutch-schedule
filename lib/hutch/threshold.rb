@@ -31,6 +31,7 @@ module Hutch
       def threshold(args)
         @block_given = args.is_a?(Proc)
         if @block_given
+          raise "block only can have zero or one arguments" if args.arity > 1
           @threshold_block = args
         else
           raise "need args or block" if args.blank?
@@ -49,34 +50,44 @@ module Hutch
                                       redis:           Hutch::Schedule.redis)
       end
       
+      
       # is class level @rate_limiter _context exceeded?
       # if class level @rate_limiter is nil alwayt return false
-      def ratelimit_exceeded?
+      def ratelimit_exceeded?(message)
         return false if @rate_limiter.blank?
-        @rate_limiter.exceeded?(_context, threshold: _rate, interval: _interval)
+        args = threshold_args(message)
+        @rate_limiter.exceeded?(_context(args), threshold: _rate(args), interval: _interval(args))
       rescue Redis::BaseError
         # when redis cann't connect return exceeded limit
         true
       end
       
       # 增加一次调用
-      def ratelimit_add
+      def ratelimit_add(message)
         return if @rate_limiter.blank?
-        @rate_limiter.add(_context)
+        @rate_limiter.add(_context(threshold_args(message)))
       rescue Redis::BaseError
         nil
       end
       
-      def _context
-        @block_given ? @threshold_block.call[:context].presence || default_context : @context
+      def threshold_args(message)
+        if @block_given
+          @threshold_block.arity == 0 ? @threshold_block.call : @threshold_block.call(message.body)
+        else
+          { context: @context, rate: @rate, interval: @interval }
+        end
       end
       
-      def _rate
-        @block_given ? @threshold_block.call[:rate].presence || default_rate : @rate
+      def _context(args)
+        args.fetch(:context, default_context)
       end
       
-      def _interval
-        @block_given ? @threshold_block.call[:interval].presence || default_interval : @interval
+      def _rate(args)
+        args.fetch(:rate, default_rate)
+      end
+      
+      def _interval(args)
+        args.fetch(:interval, default_interval)
       end
     end
   end

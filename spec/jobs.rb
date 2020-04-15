@@ -26,7 +26,7 @@ class LoadWork2
   include Hutch::Enqueue
   
   consume 'load2'
-  threshold -> { { context: 'get_report', rate: 2, interval: 2 } }
+  threshold ->(msg) { { context: 'get_report', rate: 2, interval: 2 } }
   
   def process(message)
     puts "LoadWork2: #{Time.now.to_f} message: #{message.body}"

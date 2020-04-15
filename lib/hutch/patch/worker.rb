@@ -52,19 +52,48 @@ module Hutch
     
     def handle_message_with_limits(consumer, delivery_info, properties, payload)
       # 1. consumer.limit?
+      # TODO: 考虑不是 buffer 机制, 而是直接借用现在的 delay 让消息重新进队列
+      # TODO: 因为 prefetch 是 queue 级别, 但 queue 中是的任务存在根据 key 动态计算不同的 limit, 所以会出现
+      # TODO: 在 limit 差距大之后出现 buffer 内的任务的积压, 需要借用 publish dealy 来解决会让 cpu 空转的问题
+      # TODO: 5s 内的任务可以直接在 buffer 中处理掉, 延期大于 5s 的考虑成为 delay message
       # 2. yes: make and ConsumerMsg to queue
       # 3. no: post handle
+      message = args_to_message(consumer, delivery_info, properties, payload)
       @message_worker.post do
-        if consumer.ratelimit_exceeded?
-          @buffer_queue.push(ConsumerMsg.new(consumer, delivery_info, properties, payload))
+        if consumer.ratelimit_exceeded?(message)
+          @buffer_queue.push(message)
         else
           # if Hutch disconnect skip do work let message timeout in rabbitmq waiting message push again
           return unless @connected
-          consumer.ratelimit_add
-          handle_message(consumer, delivery_info, properties, payload)
+          consumer.ratelimit_add(message)
+          handle_hutch_message(consumer, message)
         end
       end
     end
+    
+    # change args to message reuse the code from #handle_message
+    def args_to_message(consumer, delivery_info, properties, payload)
+      serializer = consumer.get_serializer || Hutch::Config[:serializer]
+      logger.debug {
+        spec = serializer.binary? ? "#{payload.bytesize} bytes" : "#{payload}"
+        "message(#{properties.message_id || '-'}): " +
+          "routing key: #{delivery_info.routing_key}, " +
+          "consumer: #{consumer}, " +
+          "payload: #{spec}"
+      }
+      
+      Hutch::Message.new(delivery_info, properties, payload, serializer)
+    end
+    
+    def handle_hutch_message(consumer, message)
+      consumer_instance = consumer.new.tap { |c| c.broker, c.delivery_info = @broker, message.delivery_info }
+      with_tracing(consumer_instance).handle(message)
+      @broker.ack(delivery_info.delivery_tag)
+    rescue => ex
+      acknowledge_error(delivery_info, properties, @broker, ex)
+      handle_error(properties, payload, consumer, ex)
+    end
+    
     
     # 心跳检查 Hutch 的连接
     def heartbeat_connection

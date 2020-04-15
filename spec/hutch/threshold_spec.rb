@@ -33,11 +33,11 @@ RSpec.describe Hutch::Threshold do
     end
     
     it '#ratelimit_exceeded? eq false' do
-      expect(NoThresholdWork.ratelimit_exceeded?).to be_falsey
+      expect(NoThresholdWork.ratelimit_exceeded?(nil)).to be_falsey
     end
     
     it '#ratelimit_add eq nil' do
-      expect(NoThresholdWork.ratelimit_add).to be_nil
+      expect(NoThresholdWork.ratelimit_add(nil)).to be_nil
     end
   end
 end

@@ -38,12 +38,23 @@ RSpec.describe Hutch::Schedule::Core do
     # 用于手动测试 woker
     it 'process', skip: true do
       Hutch::Schedule.connect
+      Hutch::Config.setup_procs << -> {
+        10.times do
+          LoadWork.enqueue(b: 1)
+          LoadWork2.enqueue(b: 1)
+        end
+      }
       @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
       @worker.run
-      10.times do
-        LoadWork.enqueue(b: 1)
+    end
+    
+    it 'handle mesage', skip: false do
+      Hutch::Schedule.connect
+      Hutch::Config.setup_procs << -> {
         LoadWork2.enqueue(b: 1)
-      end
+      }
+      @worker = Hutch::Worker.new(Hutch.broker, Hutch.consumers, Hutch::Config.setup_procs)
+      @worker.run
     end
   end
 end
