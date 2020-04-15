@@ -1,5 +1,5 @@
 module Hutch
   module Schedule
-    VERSION = "0.7.1.alpha"
+    VERSION = "0.7.2"
   end
 end
