@@ -13,21 +13,20 @@ module Hutch
     class_methods do
       
       # Publish the message to this consumer with one routing_key
-      # TODO: 需要约束传入的消息格式: 底层使用了 Hutch 的 serializer 需要处理
-      def enqueue(message)
-        Hutch.publish(enqueue_routing_key, message)
+      def enqueue(msg = {})
+        Hutch.publish(enqueue_routing_key, msg)
       end
       
       # enqueue unique message
-      def enqueue_uniq(uniq_key, message)
+      def enqueue_uniq(uniq_key, msg = {})
         return false unless uniq_key_check(uniq_key)
-        enqueue(message)
+        enqueue(msg)
       end
       
       # publish message at a delay times
       # interval: delay interval seconds
       # message: publish message
-      def enqueue_in(interval, message, props = {})
+      def enqueue_in(interval, message = {}, props = {})
         # TODO: 超过 3h 的延迟也会接收, 但是不会延迟那么长时间, 但给予 warn
         delay_seconds = delay_seconds_level(interval)
         
@@ -42,13 +41,13 @@ module Hutch
         Hutch::Schedule.publish(delay_routing_key, message, properties)
       end
       
-      def enqueue_uniq_in(uniq_key, interval, message, props = {})
+      def enqueue_uniq_in(uniq_key, interval, message = {}, props = {})
         return false unless uniq_key_check(uniq_key)
         enqueue_in(interval, message, props)
       end
       
       # delay at exatly time point
-      def enqueue_at(time, message, props = {})
+      def enqueue_at(time, message = {}, props = {})
         # compatible with with ActiveJob API
         time_or_timestamp = time.respond_to?(:utc) ? time.utc.to_f : time
         # if time is early then now then just delay 1 second
@@ -56,7 +55,7 @@ module Hutch
         enqueue_in(interval, message, props)
       end
       
-      def enqueue_uniq_at(uniq_key, time, message, props = {})
+      def enqueue_uniq_at(uniq_key, time, message = {}, props = {})
         return false unless uniq_key_check(uniq_key)
         enqueue_at(time, message, props)
       end

@@ -26,6 +26,12 @@ RSpec.describe Hutch::Schedule::Core do
       Hutch::Schedule.disconnect
     end
     
+    it 'enqueue no args work' do
+      Hutch::Schedule.connect
+      NoArgsWork.enqueue
+    end
+    
+    
     it 'check delay queue is set' do
       Hutch::Schedule.connect
       expect(Hutch.connected?).to be true

@@ -9,6 +9,18 @@ class NoThresholdWork
   end
 end
 
+class NoArgsWork
+  include Hutch::Consumer
+  include Hutch::Enqueue
+  
+  consume 'noargs'
+  
+  def process
+    puts "NoArgsWork: #{Time.now.to_f}"
+  end
+end
+
+
 class LoadWork
   include Hutch::Consumer
   include Hutch::Enqueue

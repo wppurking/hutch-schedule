@@ -64,11 +64,14 @@ redis_url | redis://127.0.0.1:6379/0 | Redis backend url for Ratelimit and Uniqu
 ratelimit_bucket_interval | 1 | Ratelimit use the time bucket (seconds) to store the counts, lower the more accurate
 
 ## Hutch::Enqueue
-Let consumer to include `Hutch::Enqueue` then it has the ability of publishing message to RabbitMQ with the `consume '<routing_key>'`
+Let consumer to include `Hutch::Enqueue` then it has the ability of publishing message to RabbitMQ with the `consume '<routing_key>'`.
+
+*Only support enqueue `Hash` format message*
 
 * enqueue: just publish one message
 * enqueue_in: publish one message and delay <interval> seconds
 * enqueue_at: publish one message and auto calculate the <interval> seconds need to delay
+* enqueue_uniq(_in/at): publish uniq message with uniq_key
 
 According to the RabbitMQ [TTL Message design limits](http://www.rabbitmq.com/ttl.html#per-message-ttl-caveats) ([discus](https://github.com/rebus-org/Rebus/issues/594#issuecomment-289961537)),
 We design the fixed delay level from seconds to hours, below is the details:
