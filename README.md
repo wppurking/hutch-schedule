@@ -62,6 +62,7 @@ poller_interval| 1 | seconds of the poller to trigger, poller the message in Buf
 poller_batch_size | 100 | the message size of every batch triggerd by the poller
 redis_url | redis://127.0.0.1:6379/0 | Redis backend url for Ratelimit and Unique Job 
 ratelimit_bucket_interval | 1 | Ratelimit use the time bucket (seconds) to store the counts, lower the more accurate
+worker_buffer_flush_interval | 6 | Monkey patch, flush the Hutch::Worker.@buffer_queue message to RabbitMQ check interval
 
 ## Hutch::Enqueue
 Let consumer to include `Hutch::Enqueue` then it has the ability of publishing message to RabbitMQ with the `consume '<routing_key>'`.
