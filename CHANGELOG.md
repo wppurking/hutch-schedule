@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.7.3] - 2020-04-16
+### Fixed
+- add #threshold Proc to support pass enqueue msg to lambada args 
+- add check interval for flush Hutch::Worker.buffer_queue to RabbitMQ to avoid blocking for handling limited message
+
+## [0.7.1] - 2020-04-16
+### Fixed
+- add threshold default {context, rate, interval} value
+- fix monkey patch Hutch::Config.define_methods
+
 ## [0.7.0] - 2020-04-13
 ### Fixed
 - Use monkey patch to support Conumser ratelimit through Hutch::Threshold

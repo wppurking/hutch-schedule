@@ -115,7 +115,7 @@ end
 ```
 
 threshold lambada need get return value must be a Hash and include:
-* context: the limit context with currency threshold
+* context: the limit context with current threshold
 * rate: the rate speed of threshold
 * interval: the time range of threshold
 
