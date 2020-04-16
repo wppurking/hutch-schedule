@@ -205,5 +205,18 @@ The gem is available as open source under the terms of the [MIT License](http://
 ## Performance
 Use the repo: https://github.com/wppurking/hutch-schedule-demo
 
+Woker | Publish| Consume | Comment
+-----|---------|---------|--------|
+Hutch | 13261 msg/s | 5700 msg/s | |
+ActiveJob | 6100 job/s | 1700 job/s | ActiveJob serilizer job get large message size slow the speed |
+
+### Hutch
+![Hutch publish message](https://mengqi.nyc3.digitaloceanspaces.com/rabbitmq_publish.png)
+![Hutch dequeue to execute](https://mengqi.nyc3.digitaloceanspaces.com/rabbitmq_consume.png)
+
+### ActiveJob
+![ActiveJob enqueue](https://mengqi.nyc3.digitaloceanspaces.com/rabbitmq_aj_consume.png)
+![ActiveJob dequeue to execute](https://mengqi.nyc3.digitaloceanspaces.com/rabbitmq_aj_publish.png)
+
 # TODO
 * add cron job support
