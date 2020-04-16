@@ -19,6 +19,10 @@ module Hutch
     # Ratelimit redis backend reconnect attempts
     number_setting :ratelimit_redis_reconnect_attempts, 10
     
+    # Hutch::Worker buffer flush interval in seconds
+    # 这个时间长度决定了 woker.buffer_queue 中长周期等待的任务交换给 RabbitMQ 的检查周期, 不适合太过频繁
+    number_setting :worker_buffer_flush_interval, 6
+    
     initialize(
       worker_pool_size:  20,
       poller_interval:   1,
@@ -27,8 +31,9 @@ module Hutch
       redis_url:                          "redis://127.0.0.1:6379/0",
       ratelimit_bucket_interval:          1,
       ratelimit_redis_reconnect_attempts: 10,
+      worker_buffer_flush_interval:       6,
       # need an positive channel_prefetch
-      channel_prefetch:                   20
+      channel_prefetch: 20
     )
     define_methods
   end

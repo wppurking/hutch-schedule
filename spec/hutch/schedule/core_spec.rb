@@ -49,7 +49,7 @@ RSpec.describe Hutch::Schedule::Core do
     end
     
     it 'handle mesage', skip: false do
-      Hutch::Config.channel_prefetch = 10
+      Hutch::Config.channel_prefetch = 30
       # Hutch::Config.log_level        = Logger::DEBUG
       Hutch::Config.setup_procs << -> {
         1000.times { LoadWork2.enqueue(b: rand(2)) }
