@@ -38,8 +38,8 @@ module Hutch
     # Stop two thread pool
     def stop
       @timer_worker.shutdown
-      @message_worker.shutdown
       @broker.stop
+      @message_worker.shutdown
     end
     
     # Bind a consumer's routing keys to its queue, and set up a subscription to
@@ -70,7 +70,6 @@ module Hutch
           handle_cmsg(*cmsg.handle_cmsg_args)
         end
       end
-    
     end
     
     def handle_message_with_limits(consumer, delivery_info, properties, payload)
